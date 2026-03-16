@@ -4,8 +4,8 @@
 ## Quick Install
 *Clone repository*
 ```bash
-git clone 
-cd campus-one-backend
+git clone https://github.com/sherlinvst/tokenizer-project
+cd tokenizer-project
 ```
 
 ## Project layout
