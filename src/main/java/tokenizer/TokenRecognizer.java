@@ -11,6 +11,7 @@ public abstract class TokenRecognizer {
     // null is a SPECIAL literal type
     // https://www.geeksforgeeks.org/java/literals-in-java/ <- check here for more details on literals in Java
     // 3. "Invalid Input" [private final String] - default invalid token type if input doesn't match any token type oridentifier pattern
+    // 4. Use keywords, operators, and separators model and their respective getToken method to retrive meaning of lexeme
 
 
     // Create a logic where it can recognize pattern
