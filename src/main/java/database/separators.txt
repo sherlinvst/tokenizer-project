@@ -1,0 +1,12 @@
+(,parenthesis
+),parenthesis
+{,braces
+},braces
+[,bracket
+],bracket
+;,semicolon
+,,comma 
+.,period
+:,colon
+",double-quotation-mark
+',single-quotation-mark
