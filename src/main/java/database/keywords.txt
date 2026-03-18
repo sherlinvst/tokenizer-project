@@ -33,6 +33,7 @@ return,control-flow-keyword
 sealed,object-oriented-keyword
 short,data-type-keyword
 static,object-oriented-keyword
+String,data-type-keyword
 super,object-oriented-keyword
 switch,control-flow-keyword
 this,object-oriented-keyword
