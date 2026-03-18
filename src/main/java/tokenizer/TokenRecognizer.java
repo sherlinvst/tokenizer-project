@@ -47,6 +47,40 @@ public abstract class TokenRecognizer {
     // 
     // int - data-type-keyword
     // ` - invalid input (doesn't match any token type or identifier pattern)
+    //
+    // Example 4:
+    // public class HelloWorld {
+    //     public static void main(String[] args) {
+    //         System.out.println("Hello, World!");
+    //     }
+    // }
+    //
+    // public          - access-control-keyword
+    // class           - object-oriented-keyword
+    // HelloWorld      - identifier
+    // {               - bracket
+    // public          - access-control-keyword
+    // static          - object-oriented-keyword
+    // void            - data-type-keyword
+    // main            - identifier
+    // (               - parenthesis
+    // String          - data-type-keyword
+    // [               - bracket
+    // ]               - bracket
+    // args            - identifier
+    // )               - parenthesis
+    // {               - bracket
+    // System          - identifier
+    // .               - period
+    // out             - identifier
+    // .               - period
+    // println         - identifier
+    // (               - parenthesis
+    // "Hello, World!" - string-literal
+    // )               - parenthesis
+    // ;               - semicolon
+    // }               - bracket
+    // }               - bracket
 
     // Needed method:
     // 1. recognizeTokens(lexeme) [protected String] - recognize input string and return token type {use getLLiteralType for literals and getToken for keywords, operators, separators} if model returns null, return "Identifier" as default token type for identifiers, if it doesn't match identifier pattern return "Invalid Input" 
