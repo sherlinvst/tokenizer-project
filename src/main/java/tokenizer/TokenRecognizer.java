@@ -17,6 +17,7 @@ public abstract class TokenRecognizer {
         STRING, CHAR, NUMERIC, FLOAT, BOOLEAN, SPECIAL
     }
 
+<<<<<<< HEAD
     protected String recognizeTokens(String lexeme){
       // For more optimized version, check first if number or string
       // if number then automatic literal na sha, check type of literal
@@ -26,6 +27,51 @@ public abstract class TokenRecognizer {
         if(lexeme == null || lexeme.isEmpty()){
             return invalidInput;
         }
+=======
+    private final String identifier = "Identifier";
+    private final String invalidInput = "Invalid Input";
+
+    private final Keywords keywords = new Keywords();
+    private final Operators operators = new Operators();
+    private final Separators separators = new Separators();
+
+    private String recognizeTokens(String lexeme){
+        String keywordToken = keywords.getToken(lexeme);
+        if(keywordToken != null){
+            return keywordToken;
+        }
+
+        String operatorToken = operators.getToken(lexeme);
+        if(operatorToken != null){
+            return operatorToken;
+        }
+
+        String separatorToken = separators.getToken(lexeme);
+        if(separatorToken != null){
+            return separatorToken;
+        }
+
+        String literalToken = getLiteralType(lexeme);
+        if(literalToken != null){
+            return literalToken;
+        }
+    }
+
+    private enum LiteralType {
+        STRING, CHAR, NUMERIC, FLOAT, BOOLEAN, SPECIAL
+    }
+
+    private String getLiteralType(String lexeme){
+        if(lexeme.equals("null")){
+            return LiteralType.SPECIAL.toString().toLowerCase() + "-literal";
+        }
+
+        if(lexeme.equals("true") || lexeme.equals("false")){
+            return LiteralType.BOOLEAN.toString().toLowerCase() + "-literal";
+        }
+    }
+
+>>>>>>> 475a203 (Updated the token recognizer)
 
         String keywordToken = keywords.getToken(lexeme);
         if(keywordToken != null){
