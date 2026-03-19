@@ -1,0 +1,66 @@
+Example 1:
+String name = "John Doe";
+
+String - data-type-keyword
+name - identifier
+= - assignment-operator
+"John Doe" - string-literal
+
+Example 2:
+while (true) {
+   String var = "Hello world";
+   break;
+}
+
+while - keyword
+( - parenthesis
+true - boolean-literal
+) - parenthesis
+{ - bracket
+String - data-type-keyword
+var - identifier
+= - assignment-operator
+"Hello world" - string-literal
+; - semicolon
+break - keyword
+} - bracket
+
+Example 3:
+int `
+
+int - data-type-keyword
+` - invalid input (doesn't match any token type or identifier pattern)
+
+Example 4:
+public class HelloWorld {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}
+
+public          - access-control-keyword
+class           - object-oriented-keyword
+HelloWorld      - identifier
+{               - bracket
+public          - access-control-keyword
+static          - object-oriented-keyword
+void            - data-type-keyword
+main            - identifier
+(               - parenthesis
+String          - data-type-keyword
+[               - bracket
+]               - bracket
+args            - identifier
+)               - parenthesis
+{               - bracket
+System          - identifier
+.               - period
+out             - identifier
+.               - period
+println         - identifier
+(               - parenthesis
+"Hello, World!" - string-literal
+)               - parenthesis
+;               - semicolon
+}               - bracket
+}               - bracket
