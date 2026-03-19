@@ -22,7 +22,7 @@ public class Keywords extends Tokens{
                     String firstChar = line.substring(0, 1);
 
                     if (!alphabetIndex.containsKey(firstChar)) {
-                        alphabetIndex.put(firstChar, keywords.size() - 1);
+                        alphabetIndex.put(firstChar, keywords.size());
                     }
 
                     keywords.add(line);
