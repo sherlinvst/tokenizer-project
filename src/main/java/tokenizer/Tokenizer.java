@@ -13,4 +13,8 @@ public class Tokenizer extends TokenRecognizer {
     // 2. tokenize(line of code, line number) - to analyze token per line using TokenRecognizer and add to list of tokens [public void]
     // 3. getTokens() - return list of tokens [public ArrayList<Token>]
     // 4. toSentenceCase (token type) - to convert token type to sentence case for better readability {ex. data-type-keyword -> Data Type Keyword} [private String]
+
+    // Added note:
+    // For tokenize method, strip the line by spaces para maging array of string 
+    // then loop through that array para isa isang ma-recognize ang token
 }
