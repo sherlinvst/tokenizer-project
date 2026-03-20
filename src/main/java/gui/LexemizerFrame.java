@@ -1,7 +1,8 @@
 package main.java.gui;
 
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
+import main.java.gui.popups.*;
 
 public class LexemizerFrame extends JFrame {
 
@@ -94,5 +95,10 @@ public class LexemizerFrame extends JFrame {
     public void onClear() {
         lexemePanel.clearRows();
         tokenPanel.clearRows();
+    }
+
+    public void start() {
+    setVisible(true);
+    new WcPop(this).showPopup(); // ← triggers on launch
     }
 }

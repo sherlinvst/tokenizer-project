@@ -1,12 +1,13 @@
 package main.java.gui;
 
+import java.awt.*;
+import java.awt.event.ActionEvent;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.plaf.basic.BasicScrollBarUI;
-import java.awt.*;
-import java.awt.event.ActionEvent;
+import main.java.gui.popups.WarnPop;
 
 public class CodePanel extends RoundedPanel {
 
@@ -123,7 +124,12 @@ public class CodePanel extends RoundedPanel {
         });
 
         getTokenBtn.addActionListener((ActionEvent e) -> {
-            frame.onGetToken(codeArea.getText());
+            String content = codeArea.getText().trim(); //to avoid including spaces in counting tokens
+            if (content.isEmpty()) {
+                new WarnPop(frame).showPopup();
+            } else {
+                frame.onGetToken(content);
+            }
         });
     }
 
