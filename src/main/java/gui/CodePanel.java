@@ -119,14 +119,19 @@ public class CodePanel extends RoundedPanel {
 
         //action ng buttons clear and get token
         clearBtn.addActionListener((ActionEvent e) -> {
-            codeArea.setText("");
-            frame.onClear();
+            String content = codeArea.getText().trim();
+            if (content.isEmpty()) {
+                new WarnPop(frame, "The code area is empty.").showPopup();
+            } else {
+                codeArea.setText("");
+                frame.onClear();
+            }
         });
 
         getTokenBtn.addActionListener((ActionEvent e) -> {
             String content = codeArea.getText().trim(); //to avoid including spaces in counting tokens
             if (content.isEmpty()) {
-                new WarnPop(frame).showPopup();
+                new WarnPop(frame, "The code area is empty. Please enter some code before proceeding to get token.").showPopup();
             } else {
                 frame.onGetToken(content);
             }
@@ -205,8 +210,11 @@ public class CodePanel extends RoundedPanel {
     //para sa toh sa number line like para sync sya kapag nag new newline
     private void attachListeners() {
         codeArea.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
             public void insertUpdate(DocumentEvent e)  { updateLineCount(); }
+            @Override
             public void removeUpdate(DocumentEvent e)  { updateLineCount(); }
+            @Override
             public void changedUpdate(DocumentEvent e) { updateLineCount(); }
         });
     }
