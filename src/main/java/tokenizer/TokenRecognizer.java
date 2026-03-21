@@ -23,12 +23,14 @@ public abstract class TokenRecognizer {
         // if string then check first enclosed ba ng ""
         // if enclosed ng "" then for sure literal na string
         // check if keyword, if not keyword then identifier sha
+
         if(lexeme == null || lexeme.isEmpty()) return invalidInput;
 
-        //check first if number/string
+        // check if lexeme matches any literal type (not just number or string), then classify kung saan literal type magfall under 
         String literalToken = getLiteralType(lexeme);
         if(literalToken != null) return literalToken;
- 
+
+        // if not literal type, it will be check if kwywords or opertor or separator
         String keywordToken = keywords.getToken(lexeme);
         if(keywordToken != null) return keywordToken;
 
@@ -38,29 +40,34 @@ public abstract class TokenRecognizer {
         String separatorToken = separators.getToken(lexeme);
         if(separatorToken != null) return separatorToken;
 
+        // if wala sa token, then identifier sha
         if(isIdentifier(lexeme)) return identifier;
 
         return invalidInput;
     }
 
     private String getLiteralType(String lexeme){
-        if(lexeme.equals("null")){
-            return LiteralType.SPECIAL.toString().toLowerCase() + literal;
-        }
+        // special literal
+        if(lexeme.equals("null")) return LiteralType.SPECIAL.toString().toLowerCase() + literal;
+        // boolean literal
+        if(lexeme.equals("true") || lexeme.equals("false")) return LiteralType.BOOLEAN.toString().toLowerCase() + literal;
 
-        if(lexeme.equals("true") || lexeme.equals("false")){
-             return LiteralType.BOOLEAN.toString().toLowerCase() + literal;
-        }
-
+        // string literal
+        // used regex including if ang lexeme ay nagstart sa " and end with "
+        // includes escape sequence like "\n", "\t"
         if(lexeme.matches("^\"(\\\\.|[^\"])*\"$")){
              return LiteralType.STRING.toString().toLowerCase() + literal;
         }
 
-        if(lexeme.matches("^'.'$") || lexeme.matches("^'\\\\[btnfr'\"\\\\]'$")){
+        // for char literal
+        // used regex including if ang lexeme starts with ' and end with '
+        // includes ecape sequence like '\t', '\n'
+        if(lexeme.matches("^'(\\\\[btnfr'\"\\\\]|[^\\\\'])'$")){
              return LiteralType.CHAR.toString().toLowerCase() + literal;
         }
-
-        if(lexeme.matches("^[+-]?\\d+(\\.\\d+)?([eE][+-]?\\d+)?$")){ //scientific notation included
+        
+        // for float literal
+        if(lexeme.matches("^[+-]?\\d*\\.\\d+$")){
              return LiteralType.FLOAT.toString().toLowerCase() + literal;
         }
 
@@ -78,4 +85,5 @@ public abstract class TokenRecognizer {
     private boolean isIdentifier(String lexeme){
         return lexeme.matches("^[a-zA-Z_][a-zA-Z0-9_]*$");
     }
+    
 }
