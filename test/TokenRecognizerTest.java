@@ -56,7 +56,34 @@ public class TokenRecognizerTest extends TokenRecognizer{
             "name",
             "=",
             "\"John Doe\"",
-            ";"
+            ";",
+
+            "Example 4",
+            "\" \"", // " "
+            "\"\"", // ""
+            "\"\n\"",
+            "hello_world",
+            "\' \'",
+            "'\n'",
+            "'\t'",
+            "'ab'", 
+            "\"hello\n\"",
+            "world",
+            "10e5",
+            "e10",
+            "--1.2",
+            "i++",
+            "0x1A",
+            "0x",
+            "0B1111",
+            "0b",
+            "0123",
+            "-10",  
+            "+42", 
+            "1.2",
+            "True", 
+            "NULL",
+            "++"
         };
 
         for (String lexeme : test) {
