@@ -18,38 +18,27 @@ public abstract class TokenRecognizer {
     }
 
     protected String recognizeTokens(String lexeme){
-      // For more optimized version, check first if number or string
-      // if number then automatic literal na sha, check type of literal
-      // if string then check first enclosed ba ng ""
-      // if enclosed ng "" then for sure literal na string
-      // check if keyword, if not keyword then identifier sha
-        if(lexeme == null || lexeme.isEmpty()){
-            return invalidInput;
-        }
+        // For more optimized version, check first if number or string
+        // if number then automatic literal na sha, check type of literal
+        // if string then check first enclosed ba ng ""
+        // if enclosed ng "" then for sure literal na string
+        // check if keyword, if not keyword then identifier sha
+        if(lexeme == null || lexeme.isEmpty()) return invalidInput;
 
+        //check first if number/string
+        String literalToken = getLiteralType(lexeme);
+        if(literalToken != null) return literalToken;
+ 
         String keywordToken = keywords.getToken(lexeme);
-        if(keywordToken != null){
-            return keywordToken;
-        }
+        if(keywordToken != null) return keywordToken;
 
         String operatorToken = operators.getToken(lexeme);
-        if(operatorToken != null){
-            return operatorToken;
-        }
+        if(operatorToken != null) return operatorToken;
 
         String separatorToken = separators.getToken(lexeme);
-        if(separatorToken != null){
-            return separatorToken;
-        }
+        if(separatorToken != null) return separatorToken;
 
-        String literalToken = getLiteralType(lexeme);
-        if(literalToken != null){
-            return literalToken;
-        }
-
-        if(isIdentifier(lexeme)){
-            return identifier;
-        }
+        if(isIdentifier(lexeme)) return identifier;
 
         return invalidInput;
     }
@@ -63,20 +52,24 @@ public abstract class TokenRecognizer {
              return LiteralType.BOOLEAN.toString().toLowerCase() + literal;
         }
 
-        if(lexeme.matches("^\".*\"$")){
+        if(lexeme.matches("^\"(\\\\.|[^\"])*\"$")){
              return LiteralType.STRING.toString().toLowerCase() + literal;
         }
 
-        if(lexeme.matches("^'.'$")){
+        if(lexeme.matches("^'.'$") || lexeme.matches("^'\\\\[btnfr'\"\\\\]'$")){
              return LiteralType.CHAR.toString().toLowerCase() + literal;
         }
 
-        if(lexeme.matches("^[+-]?\\d+\\.\\d+$")){
+        if(lexeme.matches("^[+-]?\\d+(\\.\\d+)?([eE][+-]?\\d+)?$")){ //scientific notation included
              return LiteralType.FLOAT.toString().toLowerCase() + literal;
         }
 
-        if(lexeme.matches("^[+-]?\\d+$")){
-             return LiteralType.NUMERIC.toString().toLowerCase() + literal;
+        //for numeric literal
+        if( lexeme.matches("^0[xX][0-9a-fA-F]+$") || // if hex 
+            lexeme.matches("^0[bB][01]+$") || // if binary
+            lexeme.matches("^0[0-7]+$") || // if octal
+            lexeme.matches("^[+-]?\\d+$")){ // if standard
+                return LiteralType.NUMERIC.toString().toLowerCase() + literal;
         }
 
         return null;
