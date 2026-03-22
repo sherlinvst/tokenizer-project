@@ -77,21 +77,21 @@ public class Popup extends JDialog {
     }
 
     public void showPopup(Position position) {
-    pack();
-    int frameX = getOwner().getX();
-    int frameY = getOwner().getY();
-    int frameW = getOwner().getWidth();
-    int frameH = getOwner().getHeight();
+        pack();
+        int frameX = getOwner().getX();
+        int frameY = getOwner().getY();
+        int frameW = getOwner().getWidth();
+        int frameH = getOwner().getHeight();
 
-    switch (position) {
-        case CENTER       -> setLocationRelativeTo(getOwner());
-        case CENTER_LEFT  -> setLocation(frameX + 20, frameY + (frameH - getHeight()) / 2);
-        case CENTER_RIGHT -> setLocation(frameX + frameW - getWidth() - 20, frameY + (frameH - getHeight()) / 2);
-        case TOP_LEFT     -> setLocation(frameX + 20, frameY + 20);
-        case TOP_RIGHT    -> setLocation(frameX + frameW - getWidth() - 20, frameY + 20);
-        case BOTTOM_LEFT  -> setLocation(frameX + 20, frameY + frameH - getHeight() - 20);
-        case BOTTOM_RIGHT -> setLocation(frameX + frameW - getWidth() - 20, frameY + frameH - getHeight() - 20);
-    }
-    setVisible(true);
+        switch (position) {
+            case CENTER       -> setLocationRelativeTo(getOwner());
+            case CENTER_LEFT  -> setLocation(frameX + 20, frameY + (frameH - getHeight()) / 2);
+            case CENTER_RIGHT -> setLocation(frameX + frameW - getWidth() - 20, frameY + (frameH - getHeight()) / 2);
+            case TOP_LEFT     -> setLocation(frameX + 20, frameY + 20);
+            case TOP_RIGHT    -> setLocation(frameX + frameW - getWidth() - 20, frameY + 20);
+            case BOTTOM_LEFT  -> setLocation(frameX + 20, frameY + frameH - getHeight() - 20);
+            case BOTTOM_RIGHT -> setLocation(frameX + frameW - getWidth() - 20, frameY + frameH - getHeight() - 20);
+        }
+        setVisible(true);
     }
 }
