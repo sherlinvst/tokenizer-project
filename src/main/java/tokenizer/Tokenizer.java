@@ -1,4 +1,5 @@
 package main.java.tokenizer;
+
 import main.java.model.Token;
 import java.util.ArrayList;
 public class Tokenizer extends TokenRecognizer {

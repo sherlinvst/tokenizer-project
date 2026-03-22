@@ -1,4 +1,5 @@
 package test;
+
 import main.java.tokenizer.Tokenizer;
 import main.java.model.Token;
 import java.util.ArrayList;
