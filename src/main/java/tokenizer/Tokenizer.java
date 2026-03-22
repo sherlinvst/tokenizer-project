@@ -1,5 +1,4 @@
 package main.java.tokenizer;
-
 public class Tokenizer extends TokenRecognizer {
     // Main class for tokenization logic
 
