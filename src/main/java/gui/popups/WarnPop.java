@@ -5,10 +5,10 @@ import javax.swing.*;
 
 public class WarnPop extends Popup {
 
-    private static final String MSG = "The code area is empty. Please enter some code before proceeding to get token.";
+    //private static final String MSG = "The code area is empty. Please enter some code before proceeding to get token.";
     
-    public WarnPop(Frame parent) {
-        super(parent, "WARNING!", MSG, new ImageIcon(
+    public WarnPop(Frame parent, String MSG) {
+        super(parent, "NOTICE!", MSG, new ImageIcon(
             new ImageIcon("src/main/java/gui/resources/WavyWarning.png")
             .getImage()
             .getScaledInstance(75, 75, Image.SCALE_SMOOTH)
