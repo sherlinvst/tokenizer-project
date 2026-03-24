@@ -31,8 +31,8 @@ public class CodePanel extends RoundedPanel {
         setBorder(new EmptyBorder(0, 0, 0, 0));
 
         lineCountLabel = buildLineCountLabel();
-        codeArea       = buildCodeArea();
-        lineNumbers    = buildLineNumberArea();
+        codeArea = buildCodeArea();
+        lineNumbers = buildLineNumberArea();
 
         layoutComponents();
         attachListeners();

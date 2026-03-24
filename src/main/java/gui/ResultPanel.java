@@ -105,7 +105,6 @@ public class ResultPanel extends RoundedPanel {
         rowContainer.repaint();
     }
 
-    //pang trial lang toh
     public void clearRows() {
         rows.clear();
         rowContainer.removeAll();
@@ -113,7 +112,6 @@ public class ResultPanel extends RoundedPanel {
         rowContainer.repaint();
     }
 
-    //pang trial lang toh
     public List<String> getRows() {
         return new ArrayList<>(rows);
     }

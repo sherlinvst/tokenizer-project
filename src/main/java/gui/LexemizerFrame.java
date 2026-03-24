@@ -1,13 +1,16 @@
 package main.java.gui;
 
 import java.awt.*;
+
 import javax.swing.*;
 import main.java.gui.popups.*;
+import main.java.tokenizer.*;
+import main.java.model.Token;
 
 public class LexemizerFrame extends JFrame {
 
     //panel
-    private  CodePanel   codePanel;
+    private  CodePanel codePanel;
     private  ResultPanel lexemePanel;
     private  ResultPanel tokenPanel;
     private  HeaderPanel headerPanel;
@@ -28,10 +31,10 @@ public class LexemizerFrame extends JFrame {
     }
 
     private void init(){
-        headerPanel  = new HeaderPanel();
-        codePanel    = new CodePanel(this);
-        lexemePanel  = new ResultPanel("LEXEME");
-        tokenPanel   = new ResultPanel("TOKEN");
+        headerPanel = new HeaderPanel();
+        codePanel = new CodePanel(this);
+        lexemePanel = new ResultPanel("LEXEME");
+        tokenPanel = new ResultPanel("TOKEN");
     }
 
     private void initWindow() {
@@ -83,15 +86,24 @@ public class LexemizerFrame extends JFrame {
     public void onGetToken(String sourceCode) { 
         lexemePanel.clearRows();
         tokenPanel.clearRows();
-        String[] rawLexemes = sourceCode.trim().split("\\s+|(?<=[;=(){}\\[\\]])|(?=[;=(){}\\[\\]])");
-        for (String lex : rawLexemes) {
-            if (!lex.isBlank()) {
-                lexemePanel.addRow(lex);
-                tokenPanel.addRow("—"); 
+
+        Tokenizer tokenizer = new Tokenizer();
+        tokenizer.emptyTokens();
+
+        String[] lines = sourceCode.split("\n");
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            if (!line.isBlank()) {
+                tokenizer.tokenize(line, i + 1);
             }
         }
+        for (Token token : tokenizer.getTokens()) {
+            lexemePanel.addRow(token.getLexeme());
+            tokenPanel.addRow(token.getTokenType());
+        }
     }
-    //toh ren trail lang
+
+    //pang erase lang toh lines
     public void onClear() {
         lexemePanel.clearRows();
         tokenPanel.clearRows();
