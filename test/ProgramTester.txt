@@ -64,3 +64,21 @@ println         - identifier
 ;               - semicolon
 }               - bracket
 }               - bracket
+
+public class Test {
+    public static void main(String[] args) {
+        int x = 10;
+        if (x >= 5) {
+            System.out.println("Value: " + x);
+        }
+    }
+}
+
+public class LexTest {
+    public static void main(String[] args) {
+        int valid = 10;
+        int @invalidVariable = 20; 
+        String ghost = "This string never ends; 
+        double badHex = 0xG1;
+    }
+}
