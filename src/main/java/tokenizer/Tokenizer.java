@@ -111,6 +111,11 @@ public class Tokenizer extends TokenRecognizer {
                     continue;
                 }
             }
+            
+            if (".;,+-*/%=<>&|^~(){}[]".indexOf(c) != -1) {
+                split.add("" + c);
+                continue;
+            }
 
             // Start of identifier or invalid identifier
             current.setLength(0);
