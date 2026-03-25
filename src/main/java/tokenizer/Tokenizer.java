@@ -2,13 +2,8 @@ package main.java.tokenizer;
 
 import main.java.model.Token;
 import java.util.ArrayList;
+
 public class Tokenizer extends TokenRecognizer {
-    // Main class for tokenization logic
-
-    // Methods and attributes in this class are tentatively planned and may be subject to change as development progresses.
-
-    // Needed attributes:
-    // 1. List of tokens [private ArrayList<Token>]
     private ArrayList<Token> tokens;
 
     // Constructor to initialize tokens
@@ -16,14 +11,11 @@ public class Tokenizer extends TokenRecognizer {
         this.tokens = new ArrayList<>();
     }
 
-    // Needed methods:
-    // 1. emptyTokens() - to clear list of tokens when needed [public void]
     public void emptyTokens() {
         tokens.clear();
     }
-    // 2. tokenize(line of code, line number) - to analyze token per line using TokenRecognizer and add to list of tokens [public void]
-     public void tokenize(String line, int lineNumber) {
 
+     public void tokenize(String line) {
         // initialize if null (safety)
         if (tokens == null) {
             tokens = new ArrayList<>();
@@ -35,21 +27,37 @@ public class Tokenizer extends TokenRecognizer {
         // then loop through that array para isa isang ma-recognize ang token
         for (String part : parts) {
             if (part.isEmpty()) continue;
+
             // use TokenRecognizer method
             String type = recognizeTokens(part);
+
             // convert to readable format
             String formattedType = toSentenceCase(type);
-            // create token object
-            Token token = new Token(part, formattedType, lineNumber);
-            // add to list
-            tokens.add(token);
+            
+            // check if token already exist
+            Token token = getToken(part);
+
+            if (token == null){
+                Token newToken = new Token(part, formattedType);
+                tokens.add(newToken);
+            }
+            else {
+                token.setOccurrence(token.getOccurrence() + 1);
+            }          
         }
     }
-    // 3. getTokens() - return list of tokens [public ArrayList<Token>]
+
+    private Token getToken (String part){
+        for (Token token : tokens){
+          if (part.equals(token.getLexeme())) return token;
+        }
+        return null;
+    }
+
     public ArrayList<Token> getTokens() {
         return tokens;
     }
-    // 4. toSentenceCase (token type) - to convert token type to sentence case for better readability {ex. data-type-keyword -> Data Type Keyword} [private String]
+
     private String toSentenceCase(String type) {
 
         if (type == null || type.isEmpty()) return "";
@@ -68,8 +76,4 @@ public class Tokenizer extends TokenRecognizer {
 
         return result.toString().trim();
     }
-
-    // Added note:
-    // For tokenize method, strip the line by spaces para maging array of string 
-    // then loop through that array para isa isang ma-recognize ang token
 }
