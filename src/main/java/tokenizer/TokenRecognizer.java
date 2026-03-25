@@ -6,7 +6,7 @@ import main.java.model.Separators;
 
 public abstract class TokenRecognizer {
     private final String identifier = "Identifier";
-    private final String literal = "Literal";
+    private final String literal = "-Literal";
     private final String invalidInput = "Syntax Error";
 
     private final Keywords keywords = new Keywords();
