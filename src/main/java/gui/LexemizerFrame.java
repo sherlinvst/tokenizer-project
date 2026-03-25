@@ -62,21 +62,23 @@ public class LexemizerFrame extends JFrame {
         gbc.weighty = 1.0;
         gbc.insets = new Insets(0, 0, 0, 7);
 
-        gbc.weightx = 2.0;
+        //code panel
+        gbc.weightx = 2.5;
         gbc.gridx = 0;
         wrapper.add(codePanel, gbc);
 
-        gbc.weightx = 1.0;
-        gbc.insets = new Insets(0, 7, 0, 7);
+        //lexeme
+        gbc.weightx = 1.5;
         gbc.gridx = 1;
         wrapper.add(lexemePanel, gbc);
 
         //occurrence
+        gbc.weightx = 1.0;
         gbc.gridx = 2;
-        gbc.insets = new Insets(0, 7, 0, 7);
         wrapper.add(occurrencePanel, gbc);
 
-        gbc.insets = new Insets(0, 7, 0, 0);
+        //token
+        gbc.weightx = 2.0;
         gbc.gridx = 3;
         wrapper.add(tokenPanel, gbc);
 
@@ -87,7 +89,7 @@ public class LexemizerFrame extends JFrame {
     public void onGetToken(String sourceCode) { 
         this.tokenizer.emptyTokens();
 
-         String[] lines = sourceCode.split("\\s+\\r\\n|(?<=[;=(){}\\[\\].])|(?=[;=(){}\\[\\].])");
+         String[] lines = sourceCode.split("\\s+\\r\\n|(?<=[;=(){}\\[\\]])|(?=[;=(){}\\[\\].])");
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i];
             if (!line.isBlank()) {
