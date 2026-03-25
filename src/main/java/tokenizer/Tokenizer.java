@@ -75,6 +75,31 @@ public class Tokenizer extends TokenRecognizer {
                 continue;
             }
 
+            // for character literal
+            else if (c == '\'') {
+                if (current.length() > 0) {
+                    split.add(current.toString());
+                    current.setLength(0);
+                }
+
+                StringBuilder charLit = new StringBuilder();
+                charLit.append(c); // starting single quote
+                i++;
+
+                // collect everything until closing single quote
+                while (i < line.length() && line.charAt(i) != '\'') {
+                    charLit.append(line.charAt(i));
+                    i++;
+                }
+
+                if (i < line.length()) {
+                    charLit.append('\''); // closing single quote
+                }
+
+                split.add(charLit.toString());
+                continue;
+            }
+
             // Two-character operators
             if (i + 1 < line.length()) {
                 char next = line.charAt(i + 1);
