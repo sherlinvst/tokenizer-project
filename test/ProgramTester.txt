@@ -82,3 +82,9 @@ public class LexTest {
         double badHex = 0xG1;
     }
 }
+
+public class LexTest{
+	public static void main(String[] args){
+	char gh = 'g';
+	}
+}
