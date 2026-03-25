@@ -46,14 +46,17 @@ public class Tokenizer extends TokenRecognizer {
         }
     }
 
-    private ArrayList<String> splitLine (String parts){
+    private ArrayList<String> splitLine(String line) {
         ArrayList<String> split = new ArrayList<>();
         StringBuilder current = new StringBuilder();
 
-        for (int i = 0; i < parts.length(); i++) {
-            char c = parts.charAt(i);
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
 
-            // for string literal
+            // Skip whitespace
+            if (Character.isWhitespace(c)) continue;
+
+            // Handle string literal
             if (c == '"') {
                 if (current.length() > 0) {
                     split.add(current.toString());
@@ -63,55 +66,49 @@ public class Tokenizer extends TokenRecognizer {
                 StringBuilder str = new StringBuilder();
                 str.append(c);
                 i++;
-
-                while (i < parts.length() && parts.charAt(i) != '"') {
-                    str.append(parts.charAt(i));
+                while (i < line.length() && line.charAt(i) != '"') {
+                    str.append(line.charAt(i));
                     i++;
                 }
-
-                if (i < parts.length()) {
-                    str.append('"'); // closing quote
-                }
-
+                if (i < line.length()) str.append('"');
                 split.add(str.toString());
+                continue;
             }
 
-            // for identifier and number
-            else if (Character.isLetterOrDigit(c) || c == '_') {
-                current.append(c);
-            }
-
-            // for symbols and operators
-            else {
-                if (current.length() > 0) {
-                    split.add(current.toString());
-                    current.setLength(0);
-                }
-
-                if (i + 1 < parts.length()) {
-                    char next = parts.charAt(i + 1);
-
-                    if ((c == '=' && next == '=') ||
-                        (c == '!' && next == '=') ||
-                        (c == '<' && next == '=') ||
-                        (c == '>' && next == '=') ||
-                        (c == '&' && next == '&') ||
-                        (c == '|' && next == '|')) {
-
-                        split.add("" + c + next);
-                        i++; // skip next char
-                        continue;
-                    }
-                }
-
-                if (!Character.isWhitespace(c)) {
-                    split.add(String.valueOf(c));
+            // Two-character operators
+            if (i + 1 < line.length()) {
+                char next = line.charAt(i + 1);
+                if ((c == '=' && next == '=') || (c == '!' && next == '=') ||
+                    (c == '<' && next == '=') || (c == '>' && next == '=') ||
+                    (c == '&' && next == '&') || (c == '|' && next == '|')) {
+                    split.add("" + c + next);
+                    i++;
+                    continue;
                 }
             }
-        }
 
-        // last token
-        if (current.length() > 0) {
+            // Start of identifier or invalid identifier
+            current.setLength(0);
+            current.append(c);
+            i++;
+
+            while (i < line.length()) {
+                char next = line.charAt(i);
+                // valid identifier chars
+                if (Character.isLetterOrDigit(next) || next == '_') {
+                    current.append(next);
+                    i++;
+                }
+                // allow dash in both valid/invalid to capture full lexeme
+                else if (next == '-') {
+                    current.append(next);
+                    i++;
+                }
+                else {
+                    break;
+                }
+            }
+            i--; // adjust index
             split.add(current.toString());
         }
 
