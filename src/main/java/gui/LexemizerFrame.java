@@ -89,7 +89,7 @@ public class LexemizerFrame extends JFrame {
     public void onGetToken(String sourceCode) { 
         this.tokenizer.emptyTokens();
 
-         String[] lines = sourceCode.split("\\s+\\r\\n|(?<=[;=(){}\\[\\]])|(?=[;=(){}\\[\\].])");
+         String[] lines = sourceCode.split("\\s+\\r\\n|(?<=[;=(){}\\[\\].])|(?=[;=(){}\\[\\].])");
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i];
             if (!line.isBlank()) {
