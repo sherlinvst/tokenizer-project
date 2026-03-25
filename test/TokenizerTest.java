@@ -12,13 +12,12 @@ public class TokenizerTest {
 
         // 2. The Input: Imagine this is a line from a Java file we want to analyze
         String codeLine = "int myNumber = 100";
-        int lineNum = 1;
 
         System.out.println("Testing line: " + codeLine);
         System.out.println("------------------------------");
 
         // 3. Action: Call the 'tokenize' method you wrote
-        myTokenizer.tokenize(codeLine, lineNum);
+        myTokenizer.tokenize(codeLine);
 
         // 4. Retrieval: Get the list of tokens back from the tokenizer
         ArrayList<Token> results = myTokenizer.getTokens();
