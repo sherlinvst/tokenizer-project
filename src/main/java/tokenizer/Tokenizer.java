@@ -2,27 +2,28 @@ package main.java.tokenizer;
 
 import main.java.model.Token;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Tokenizer extends TokenRecognizer {
-    private ArrayList<Token> tokens;
+    private HashMap<String, Token> tokenMap;
 
     // Constructor to initialize tokens
     public Tokenizer() {
-        this.tokens = new ArrayList<>();
+        this.tokenMap = new HashMap<>();
     }
 
     public void emptyTokens() {
-        tokens.clear();
+        tokenMap.clear();
     }
 
      public void tokenize(String line) {
         // initialize if null (safety)
-        if (tokens == null) {
-            tokens = new ArrayList<>();
+        if (tokenMap == null) {
+            tokenMap = new HashMap<>();
         }
 
-        // strip the line by spaces para maging array of string 
-        String[] parts = line.trim().split("\\s+");
+        // strip the line 
+        ArrayList<String> parts = splitLine(line);
 
         // then loop through that array para isa isang ma-recognize ang token
         for (String part : parts) {
@@ -35,27 +36,90 @@ public class Tokenizer extends TokenRecognizer {
             String formattedType = toSentenceCase(type);
             
             // check if token already exist
-            Token token = getToken(part);
-
-            if (token == null){
+            if (!tokenMap.containsKey(part)) {
                 Token newToken = new Token(part, formattedType);
-                tokens.add(newToken);
-            }
-            else {
+                tokenMap.put(part, newToken);
+            } else {
+                Token token = tokenMap.get(part);
                 token.setOccurrence(token.getOccurrence() + 1);
             }          
         }
     }
 
-    private Token getToken (String part){
-        for (Token token : tokens){
-          if (part.equals(token.getLexeme())) return token;
+    private ArrayList<String> splitLine (String parts){
+        ArrayList<String> split = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+
+        for (int i = 0; i < parts.length(); i++) {
+            char c = parts.charAt(i);
+
+            // for string literal
+            if (c == '"') {
+                if (current.length() > 0) {
+                    split.add(current.toString());
+                    current.setLength(0);
+                }
+
+                StringBuilder str = new StringBuilder();
+                str.append(c);
+                i++;
+
+                while (i < parts.length() && parts.charAt(i) != '"') {
+                    str.append(parts.charAt(i));
+                    i++;
+                }
+
+                if (i < parts.length()) {
+                    str.append('"'); // closing quote
+                }
+
+                split.add(str.toString());
+            }
+
+            // for identifier and number
+            else if (Character.isLetterOrDigit(c) || c == '_') {
+                current.append(c);
+            }
+
+            // for symbols and operators
+            else {
+                if (current.length() > 0) {
+                    split.add(current.toString());
+                    current.setLength(0);
+                }
+
+                if (i + 1 < parts.length()) {
+                    char next = parts.charAt(i + 1);
+
+                    if ((c == '=' && next == '=') ||
+                        (c == '!' && next == '=') ||
+                        (c == '<' && next == '=') ||
+                        (c == '>' && next == '=') ||
+                        (c == '&' && next == '&') ||
+                        (c == '|' && next == '|')) {
+
+                        split.add("" + c + next);
+                        i++; // skip next char
+                        continue;
+                    }
+                }
+
+                if (!Character.isWhitespace(c)) {
+                    split.add(String.valueOf(c));
+                }
+            }
         }
-        return null;
+
+        // last token
+        if (current.length() > 0) {
+            split.add(current.toString());
+        }
+
+        return split;
     }
 
     public ArrayList<Token> getTokens() {
-        return tokens;
+        return new ArrayList<>(tokenMap.values());
     }
 
     private String toSentenceCase(String type) {
