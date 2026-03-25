@@ -12,8 +12,8 @@ public class ResultPanel extends RoundedPanel {
     private final String title;
     private final List<String> rows = new ArrayList<>();
 
-    private JLabel  headerLabel;
-    private JPanel  rowContainer;
+    private JLabel headerLabel;
+    private JPanel rowContainer;
     private JScrollPane scrollPane;
 
     private static final Font HEADER_FONT = new Font("Courier New", Font.BOLD,  13);
