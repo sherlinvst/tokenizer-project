@@ -47,13 +47,13 @@ public class Tokenizer extends TokenRecognizer {
     }
 
     private ArrayList<String> splitLine(String line) {
-        ArrayList<String> split = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
+    ArrayList<String> split = new ArrayList<>();
+    StringBuilder current = new StringBuilder();
 
         for (int i = 0; i < line.length(); i++) {
             char c = line.charAt(i);
 
-            // Skip whitespace
+            // Skip whitespace — flush current first
             if (Character.isWhitespace(c)) {
                 if (current.length() > 0) {
                     split.add(current.toString());
@@ -114,13 +114,19 @@ public class Tokenizer extends TokenRecognizer {
                 }
             }
 
-            // Handle period: decimal (e.g. 10.10) vs method chaining (e.g. System.out)
+            // Handle period
             if (c == '.') {
-                // Check if current is purely numeric — then it's a decimal number
-                if (current.length() > 0 && current.toString().matches("[0-9]+")) {
-                    current.append(c); // attach dot to number, continue building
+                boolean nextIsDigit = (i + 1 < line.length()) && Character.isDigit(line.charAt(i + 1));
+
+                if (isNumeric(current) && nextIsDigit) {
+                    // Keep appending — even if current already has a dot (e.g. "3.14" + "." + "15" = "3.14.15")
+                    // This lets TokenRecognizer flag it as Syntax Error
+                    current.append(c);
+                } else if (current.length() == 0 && nextIsDigit) {
+                    // Leading decimal e.g. ".3"
+                    current.append(c);
                 } else {
-                    // It's a method-chain dot — flush current and emit dot separately
+                    // Standalone dot: method chain, member access
                     if (current.length() > 0) {
                         split.add(current.toString());
                         current.setLength(0);
@@ -132,16 +138,64 @@ public class Tokenizer extends TokenRecognizer {
 
             // Single-character operators/delimiters
             if (";,+-*/%=<>&|^~(){}[]".indexOf(c) != -1) {
+
+                // Catch sign after 'e'/'E' in scientific notation BEFORE flushing
+                if ((c == '+' || c == '-')
+                        && current.length() > 0
+                        && (current.charAt(current.length() - 1) == 'e'
+                            || current.charAt(current.length() - 1) == 'E')) {
+                    current.append(c); // part of scientific notation, e.g. "1e-"
+                    continue;
+                }
+
                 if (current.length() > 0) {
                     split.add(current.toString());
                     current.setLength(0);
                 }
+
+                // Check if + or - is a sign for a number, not an operator
+                if ((c == '+' || c == '-')) {
+                    boolean nextIsDigit = (i + 1 < line.length()) && Character.isDigit(line.charAt(i + 1));
+                    boolean nextIsDot   = (i + 1 < line.length()) && line.charAt(i + 1) == '.'
+                                          && (i + 2 < line.length()) && Character.isDigit(line.charAt(i + 2));
+                    boolean isSigned = (split.isEmpty() || isOperatorOrDelimiter(split.get(split.size() - 1)));
+
+                    if (isSigned && (nextIsDigit || nextIsDot)) {
+                        current.append(c);
+                        continue;
+                    }
+                }
+
                 split.add("" + c);
                 continue;
             }
 
-            // Build identifier or number (including decimal digits after the dot)
-            current.append(c);
+            // Build identifier or number character by character
+            // Allow float/double suffix (f, F, d, D) at end of numeric token
+            if ((c == 'f' || c == 'F' || c == 'd' || c == 'D')
+                    && current.length() > 0
+                    && isNumeric(current)) {
+                current.append(c);
+                split.add(current.toString());
+                current.setLength(0);
+            }
+            // Scientific notation: e.g. "1e-10", "3.14e+2"
+            // Catch 'e' or 'E' after a number
+            else if ((c == 'e' || c == 'E')
+                    && current.length() > 0
+                    && isNumeric(current)) {
+                current.append(c); // attach 'e', keep building
+            }
+            // Catch the sign after 'e'/'E' in scientific notation: "1e-" or "1e+"
+            else if ((c == '+' || c == '-')
+                    && current.length() > 0
+                    && (current.charAt(current.length() - 1) == 'e'
+                        || current.charAt(current.length() - 1) == 'E')) {
+                current.append(c); // attach sign after exponent marker
+            }
+            else {
+                current.append(c);
+            }
         }
 
         // Flush any remaining token
@@ -150,6 +204,38 @@ public class Tokenizer extends TokenRecognizer {
         }
 
         return split;
+    }
+
+      private boolean isOperatorOrDelimiter(String s) {
+          if (s == null || s.isEmpty()) return false;
+          String[] ops = {
+              "+", "-", "*", "/", "%", "=", "==", "!=", "<", ">", "<=", ">=",
+              "&&", "||", "&", "|", "^", "~", "(", ")", "{", "}", "[", "]",
+              ";", ",", "."
+          };
+          for (String op : ops) {
+              if (s.equals(op)) return true;
+          }
+          return false;
+      }
+
+    // checks if buffer is a complete or partial numeric literal (int or decimal, with optional sign)
+    private boolean isNumeric(StringBuilder sb) {
+        if (sb.length() == 0) return false;
+        int start = 0;
+        if (sb.charAt(0) == '+' || sb.charAt(0) == '-') start = 1;
+        if (start >= sb.length()) return false;
+        boolean hasDot = false;
+        for (int j = start; j < sb.length(); j++) {
+            char ch = sb.charAt(j);
+            if (ch == '.') {
+                if (hasDot) return false; // two dots = not numeric
+                hasDot = true;
+            } else if (!Character.isDigit(ch)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public ArrayList<Token> getTokens() {
