@@ -54,7 +54,13 @@ public class Tokenizer extends TokenRecognizer {
             char c = line.charAt(i);
 
             // Skip whitespace
-            if (Character.isWhitespace(c)) continue;
+            if (Character.isWhitespace(c)) {
+                if (current.length() > 0) {
+                    split.add(current.toString());
+                    current.setLength(0);
+                }
+                continue;
+            }
 
             // Handle string literal
             if (c == '"') {
@@ -62,7 +68,6 @@ public class Tokenizer extends TokenRecognizer {
                     split.add(current.toString());
                     current.setLength(0);
                 }
-
                 StringBuilder str = new StringBuilder();
                 str.append(c);
                 i++;
@@ -75,27 +80,20 @@ public class Tokenizer extends TokenRecognizer {
                 continue;
             }
 
-            // for character literal
-            else if (c == '\'') {
+            // Handle character literal
+            if (c == '\'') {
                 if (current.length() > 0) {
                     split.add(current.toString());
                     current.setLength(0);
                 }
-
                 StringBuilder charLit = new StringBuilder();
-                charLit.append(c); // starting single quote
+                charLit.append(c);
                 i++;
-
-                // collect everything until closing single quote
                 while (i < line.length() && line.charAt(i) != '\'') {
                     charLit.append(line.charAt(i));
                     i++;
                 }
-
-                if (i < line.length()) {
-                    charLit.append('\''); // closing single quote
-                }
-
+                if (i < line.length()) charLit.append('\'');
                 split.add(charLit.toString());
                 continue;
             }
@@ -106,39 +104,48 @@ public class Tokenizer extends TokenRecognizer {
                 if ((c == '=' && next == '=') || (c == '!' && next == '=') ||
                     (c == '<' && next == '=') || (c == '>' && next == '=') ||
                     (c == '&' && next == '&') || (c == '|' && next == '|')) {
+                    if (current.length() > 0) {
+                        split.add(current.toString());
+                        current.setLength(0);
+                    }
                     split.add("" + c + next);
                     i++;
                     continue;
                 }
             }
-            
-            if (".;,+-*/%=<>&|^~(){}[]".indexOf(c) != -1) {
+
+            // Handle period: decimal (e.g. 10.10) vs method chaining (e.g. System.out)
+            if (c == '.') {
+                // Check if current is purely numeric — then it's a decimal number
+                if (current.length() > 0 && current.toString().matches("[0-9]+")) {
+                    current.append(c); // attach dot to number, continue building
+                } else {
+                    // It's a method-chain dot — flush current and emit dot separately
+                    if (current.length() > 0) {
+                        split.add(current.toString());
+                        current.setLength(0);
+                    }
+                    split.add(".");
+                }
+                continue;
+            }
+
+            // Single-character operators/delimiters
+            if (";,+-*/%=<>&|^~(){}[]".indexOf(c) != -1) {
+                if (current.length() > 0) {
+                    split.add(current.toString());
+                    current.setLength(0);
+                }
                 split.add("" + c);
                 continue;
             }
 
-            // Start of identifier or invalid identifier
-            current.setLength(0);
+            // Build identifier or number (including decimal digits after the dot)
             current.append(c);
-            i++;
+        }
 
-            while (i < line.length()) {
-                char next = line.charAt(i);
-                // valid identifier chars
-                if (Character.isLetterOrDigit(next) || next == '_') {
-                    current.append(next);
-                    i++;
-                }
-                // allow dash in both valid/invalid to capture full lexeme
-                else if (next == '-') {
-                    current.append(next);
-                    i++;
-                }
-                else {
-                    break;
-                }
-            }
-            i--; // adjust index
+        // Flush any remaining token
+        if (current.length() > 0) {
             split.add(current.toString());
         }
 
