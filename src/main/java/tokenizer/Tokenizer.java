@@ -138,7 +138,11 @@ public class Tokenizer extends TokenRecognizer {
                 char next = line.charAt(i + 1);
                 if ((c == '=' && next == '=') || (c == '!' && next == '=') ||
                     (c == '<' && next == '=') || (c == '>' && next == '=') ||
-                    (c == '&' && next == '&') || (c == '|' && next == '|')) {
+                    (c == '&' && next == '&') || (c == '|' && next == '|') ||
+                    (c == '+' && next == '+') || (c == '-' && next == '-') ||
+                    (c == '+' && next == '=') || (c == '-' && next == '=') ||
+                    (c == '*' && next == '=') || (c == '/' && next == '=') ||
+                    (c == '%' && next == '=') || (c == '<' && next == '<') || (c == '>' && next == '>')){
                     if (current.length() > 0) {
                         split.add(new RawToken(current.toString(), startCol));
                         current.setLength(0);
@@ -245,9 +249,11 @@ public class Tokenizer extends TokenRecognizer {
       private boolean isOperatorOrDelimiter(String s) {
           if (s == null || s.isEmpty()) return false;
           String[] ops = {
-              "+", "-", "*", "/", "%", "=", "==", "!=", "<", ">", "<=", ">=",
-              "&&", "||", "&", "|", "^", "~", "(", ")", "{", "}", "[", "]",
-              ";", ",", "."
+              "+", "-", "*", "/", "%",
+              "=", "<", ">","!","&", 
+              "|", "^", "~",">>>",
+              "(", ")", "{", "}", "[", "]",
+              ":",";", ",", "."
           };
           for (String op : ops) {
               if (s.equals(op)) return true;
