@@ -2,24 +2,24 @@ package main.java.tokenizer;
 
 import main.java.model.Token;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class Tokenizer extends TokenRecognizer {
-    private HashMap<String, Token> tokenMap;
+    private ArrayList<Token> tokens;
 
     // Constructor to initialize tokens
     public Tokenizer() {
-        this.tokenMap = new HashMap<>();
+        this.tokens = new ArrayList<>();
     }
 
     public void emptyTokens() {
-        tokenMap.clear();
+        tokens.clear();
     }
 
-     public void tokenize(String line) {
+     public void tokenize(String line, int lineNumber) {
+        int colNumber = 1;
         // initialize if null (safety)
-        if (tokenMap == null) {
-            tokenMap = new HashMap<>();
+        if (tokens == null) {
+            tokens = new ArrayList<>();
         }
 
         // strip the line 
@@ -35,14 +35,9 @@ public class Tokenizer extends TokenRecognizer {
             // convert to readable format
             String formattedType = toSentenceCase(type);
             
-            // check if token already exist
-            if (!tokenMap.containsKey(part)) {
-                Token newToken = new Token(part, formattedType);
-                tokenMap.put(part, newToken);
-            } else {
-                Token token = tokenMap.get(part);
-                token.setOccurrence(token.getOccurrence() + 1);
-            }          
+            tokens.add(new Token(part, formattedType, lineNumber, colNumber)); // line and column numbers can be set later if needed
+
+            colNumber += part.length(); // update column number for next token
         }
     }
 
@@ -239,7 +234,7 @@ public class Tokenizer extends TokenRecognizer {
     }
 
     public ArrayList<Token> getTokens() {
-        return new ArrayList<>(tokenMap.values());
+        return tokens;
     }
 
     private String toSentenceCase(String type) {
