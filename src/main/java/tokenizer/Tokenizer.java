@@ -4,6 +4,17 @@ import main.java.model.Token;
 import java.util.ArrayList;
 
 public class Tokenizer extends TokenRecognizer {
+    // temp class object to store token and column number
+    private static class RawToken {
+        final String text;
+        final int col; // 1-based column where this token starts
+
+        RawToken(String text, int col) {
+            this.text = text;
+            this.col = col;
+        }
+    }
+
     private ArrayList<Token> tokens;
 
     // Constructor to initialize tokens
@@ -15,35 +26,31 @@ public class Tokenizer extends TokenRecognizer {
         tokens.clear();
     }
 
-     public void tokenize(String line, int lineNumber) {
-        int colNumber = 1;
-        // initialize if null (safety)
-        if (tokens == null) {
-            tokens = new ArrayList<>();
+    // call this function to input ALL lines of code and put the line number of the first line that is NOT EMPTY
+    public void tokenizeLines (ArrayList<String> lines, int lineNumber) {
+        for (String line : lines) {
+            tokenize(line, lineNumber);
+            lineNumber++;
         }
-
-        // strip the line 
-        ArrayList<String> parts = splitLine(line);
-
-        // then loop through that array para isa isang ma-recognize ang token
-        for (String part : parts) {
-            if (part.isEmpty()) continue;
-
-            // use TokenRecognizer method
-            String type = recognizeTokens(part);
-
-            // convert to readable format
-            String formattedType = toSentenceCase(type);
-            
-            tokens.add(new Token(part, formattedType, lineNumber, colNumber)); // line and column numbers can be set later if needed
-
-            colNumber += part.length(); // update column number for next token
-        }
+        tokens.add(new Token("EOF", "EOF", lines.size() + 1, 0));
     }
 
-    private ArrayList<String> splitLine(String line) {
-    ArrayList<String> split = new ArrayList<>();
-    StringBuilder current = new StringBuilder();
+    private void tokenize(String line, int lineNumber) {
+        ArrayList<RawToken> parts = splitLine(line);
+
+        for (RawToken raw : parts) {
+            if (raw.text.isEmpty()) continue;
+
+            String type = recognizeTokens(raw.text);
+            String formattedType = toSentenceCase(type);
+
+            tokens.add(new Token(raw.text, formattedType, lineNumber, raw.col));
+        }
+    }
+    private ArrayList<RawToken> splitLine(String line) {
+        ArrayList<RawToken> split = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        int startCol = 1;
 
         for (int i = 0; i < line.length(); i++) {
             char c = line.charAt(i);
@@ -51,18 +58,23 @@ public class Tokenizer extends TokenRecognizer {
             // Skip whitespace
             if (Character.isWhitespace(c)) {
                 if (current.length() > 0) {
-                    split.add(current.toString());
+                    split.add(new RawToken(current.toString(), startCol));
                     current.setLength(0);
                 }
                 continue;
+            }
+            
+            if (current.length() == 0) {
+                startCol = i + 1; // i is 0-based, col is 1-based
             }
 
             // Handle string literal
             if (c == '"') {
                 if (current.length() > 0) {
-                    split.add(current.toString());
+                    split.add(new RawToken(current.toString(), startCol));
                     current.setLength(0);
                 }
+                int strStart = i + 1; // 1-based col of the opening quote
                 StringBuilder str = new StringBuilder();
                 str.append(c);
                 i++;
@@ -71,16 +83,17 @@ public class Tokenizer extends TokenRecognizer {
                     i++;
                 }
                 if (i < line.length()) str.append('"');
-                split.add(str.toString());
+                split.add(new RawToken(str.toString(), strStart));
                 continue;
             }
 
             // Handle character literal
             if (c == '\'') {
                 if (current.length() > 0) {
-                    split.add(current.toString());
+                    split.add(new RawToken(current.toString(), startCol));
                     current.setLength(0);
                 }
+                int charStart = i + 1;
                 StringBuilder charLit = new StringBuilder();
                 charLit.append(c);
                 i++;
@@ -89,7 +102,7 @@ public class Tokenizer extends TokenRecognizer {
                     i++;
                 }
                 if (i < line.length()) charLit.append('\'');
-                split.add(charLit.toString());
+                split.add(new RawToken(charLit.toString(), charStart));
                 continue;
             }
 
@@ -100,10 +113,10 @@ public class Tokenizer extends TokenRecognizer {
                     (c == '<' && next == '=') || (c == '>' && next == '=') ||
                     (c == '&' && next == '&') || (c == '|' && next == '|')) {
                     if (current.length() > 0) {
-                        split.add(current.toString());
+                        split.add(new RawToken(current.toString(), startCol));
                         current.setLength(0);
                     }
-                    split.add("" + c + next);
+                    split.add(new RawToken("" + c + next, i + 1));
                     i++;
                     continue;
                 }
@@ -123,10 +136,10 @@ public class Tokenizer extends TokenRecognizer {
                 } else {
                     // Standalone dot for method chain, member access
                     if (current.length() > 0) {
-                        split.add(current.toString());
+                        split.add(new RawToken(current.toString(), startCol));
                         current.setLength(0);
                     }
-                    split.add(".");
+                    split.add(new RawToken(".", i + 1));
                 }
                 continue;
             }
@@ -144,7 +157,7 @@ public class Tokenizer extends TokenRecognizer {
                 }
 
                 if (current.length() > 0) {
-                    split.add(current.toString());
+                    split.add(new RawToken(current.toString(), startCol));
                     current.setLength(0);
                 }
 
@@ -153,15 +166,16 @@ public class Tokenizer extends TokenRecognizer {
                     boolean nextIsDigit = (i + 1 < line.length()) && Character.isDigit(line.charAt(i + 1));
                     boolean nextIsDot   = (i + 1 < line.length()) && line.charAt(i + 1) == '.'
                                           && (i + 2 < line.length()) && Character.isDigit(line.charAt(i + 2));
-                    boolean isSigned = (split.isEmpty() || isOperatorOrDelimiter(split.get(split.size() - 1)));
+                    boolean isSigned = (split.isEmpty() || isOperatorOrDelimiter(split.get(split.size() - 1).text));
 
                     if (isSigned && (nextIsDigit || nextIsDot)) {
+                      startCol = i + 1;
                         current.append(c);
                         continue;
                     }
                 }
 
-                split.add("" + c);
+                split.add(new RawToken("" + c, i + 1));
                 continue;
             }
 
@@ -171,7 +185,7 @@ public class Tokenizer extends TokenRecognizer {
                     && current.length() > 0
                     && isNumeric(current)) {
                 current.append(c);
-                split.add(current.toString());
+                split.add(new RawToken(current.toString(), startCol));
                 current.setLength(0);
             }
             // For scientific notation
@@ -195,7 +209,7 @@ public class Tokenizer extends TokenRecognizer {
 
         // For any remaining token
         if (current.length() > 0) {
-            split.add(current.toString());
+            split.add(new RawToken(current.toString(), startCol));
         }
 
         return split;
@@ -238,7 +252,6 @@ public class Tokenizer extends TokenRecognizer {
     }
 
     private String toSentenceCase(String type) {
-
         if (type == null || type.isEmpty()) return "";
 
         String[] words = type.split("-");
