@@ -53,7 +53,7 @@ public class Tokenizer extends TokenRecognizer {
         for (int i = 0; i < line.length(); i++) {
             char c = line.charAt(i);
 
-            // Skip whitespace — flush current first
+            // Skip whitespace
             if (Character.isWhitespace(c)) {
                 if (current.length() > 0) {
                     split.add(current.toString());
@@ -119,14 +119,14 @@ public class Tokenizer extends TokenRecognizer {
                 boolean nextIsDigit = (i + 1 < line.length()) && Character.isDigit(line.charAt(i + 1));
 
                 if (isNumeric(current) && nextIsDigit) {
-                    // Keep appending — even if current already has a dot (e.g. "3.14" + "." + "15" = "3.14.15")
-                    // This lets TokenRecognizer flag it as Syntax Error
+                    // Appending — even if current already has a dot
+                    // Flag it as Syntax Error
                     current.append(c);
                 } else if (current.length() == 0 && nextIsDigit) {
-                    // Leading decimal e.g. ".3"
+                    // Leading decimal
                     current.append(c);
                 } else {
-                    // Standalone dot: method chain, member access
+                    // Standalone dot for method chain, member access
                     if (current.length() > 0) {
                         split.add(current.toString());
                         current.setLength(0);
@@ -139,12 +139,12 @@ public class Tokenizer extends TokenRecognizer {
             // Single-character operators/delimiters
             if (";,+-*/%=<>&|^~(){}[]".indexOf(c) != -1) {
 
-                // Catch sign after 'e'/'E' in scientific notation BEFORE flushing
+                // Catch sign after 'e'/'E' in scientific notation
                 if ((c == '+' || c == '-')
                         && current.length() > 0
                         && (current.charAt(current.length() - 1) == 'e'
                             || current.charAt(current.length() - 1) == 'E')) {
-                    current.append(c); // part of scientific notation, e.g. "1e-"
+                    current.append(c); // part of scientific notation
                     continue;
                 }
 
@@ -171,7 +171,7 @@ public class Tokenizer extends TokenRecognizer {
             }
 
             // Build identifier or number character by character
-            // Allow float/double suffix (f, F, d, D) at end of numeric token
+            // Allow float/double letters (f, F, d, D) at end of numeric token
             if ((c == 'f' || c == 'F' || c == 'd' || c == 'D')
                     && current.length() > 0
                     && isNumeric(current)) {
@@ -179,7 +179,7 @@ public class Tokenizer extends TokenRecognizer {
                 split.add(current.toString());
                 current.setLength(0);
             }
-            // Scientific notation: e.g. "1e-10", "3.14e+2"
+            // For scientific notation
             // Catch 'e' or 'E' after a number
             else if ((c == 'e' || c == 'E')
                     && current.length() > 0
@@ -198,7 +198,7 @@ public class Tokenizer extends TokenRecognizer {
             }
         }
 
-        // Flush any remaining token
+        // For any remaining token
         if (current.length() > 0) {
             split.add(current.toString());
         }
