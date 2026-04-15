@@ -2,13 +2,13 @@
 -,arithmetic-operator
 *,arithmetic-operator
 /,arithmetic-operator
-%,arithmetic-operator
 +=,assignment-operator
 -=,assignment-operator
 =,assignment-operator
 /=,assignment-operator
 %=,assignment-operator
 *=,assignment-operator
+%,mathematical-operator
 &&,logical-operator
 ||,logical-operator
 !,logical-operator

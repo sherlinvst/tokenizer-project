@@ -88,3 +88,21 @@ public class LexTest{
 	char gh = 'g';
 	}
 }
+
+public class Demo {
+public static void main(String[] args) {
+
+    int a = 123;
+    long b = 100L;
+    double c = 3.14;
+    double d = 1e-10;
+
+    char ch = '\n';
+    String s = "hello";
+
+    int invalid1 = 0b102;
+    char invalid2 = 'ab';
+    double invalid3 = 3.14.15;
+
+}
+}
