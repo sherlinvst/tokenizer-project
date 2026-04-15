@@ -9,15 +9,23 @@ public class TokenizerTest {
         
         // 1. Setup: Create an instance of your Tokenizer tool
         Tokenizer myTokenizer = new Tokenizer();
+        ArrayList<String> codeLines = new ArrayList<>();
 
         // 2. The Input: Imagine this is a line from a Java file we want to analyze
-        String codeLine = "int myNumber = 100";
+        String codeLine1 = "int myNumber = 10.0";
+        String codeLine2 = "int myNumber = 200";
 
-        System.out.println("Testing line: " + codeLine);
+        codeLines.add(codeLine1);
+        codeLines.add(codeLine2);
+
+        System.out.println("Testing lines:\n");
+        for (String line : codeLines) {
+            System.out.println(line);
+        }
         System.out.println("------------------------------");
 
         // 3. Action: Call the 'tokenize' method you wrote
-        myTokenizer.tokenize(codeLine);
+        myTokenizer.tokenizeLines(codeLines, 1);
 
         // 4. Retrieval: Get the list of tokens back from the tokenizer
         ArrayList<Token> results = myTokenizer.getTokens();
