@@ -16,6 +16,7 @@ public class Tokenizer extends TokenRecognizer {
     }
 
     private ArrayList<Token> tokens;
+    private boolean inBlockComment = false;
 
     // Constructor to initialize tokens
     public Tokenizer() {
@@ -36,6 +37,18 @@ public class Tokenizer extends TokenRecognizer {
     }
 
     private void tokenize(String line, int lineNumber) {
+        // skip single line comments
+        String trimmed = line.trim();
+
+        if (trimmed.startsWith("//")) {
+            return;
+        }
+
+        // inline comments
+        int commentIndex = line.indexOf("//");
+        if (commentIndex != -1) {
+            line = line.substring(0, commentIndex);
+        }
         ArrayList<RawToken> parts = splitLine(line);
 
         for (RawToken raw : parts) {
@@ -54,6 +67,20 @@ public class Tokenizer extends TokenRecognizer {
 
         for (int i = 0; i < line.length(); i++) {
             char c = line.charAt(i);
+
+            if (inBlockComment) {
+                if (c == '*' && i + 1 < line.length() && line.charAt(i + 1) == '/') {
+                    inBlockComment = false;
+                    i++; // skip '/'
+                }
+                continue;
+            }
+
+            if (c == '/' && i + 1 < line.length() && line.charAt(i + 1) == '*') {
+                inBlockComment = true;
+                i++; // skip '*'
+                continue;
+            }
 
             // Skip whitespace
             if (Character.isWhitespace(c)) {
