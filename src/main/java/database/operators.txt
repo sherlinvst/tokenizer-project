@@ -18,5 +18,12 @@
 <=,relational-operator
 >=,relational-operator
 !=,relational-operator
+&,bitwise-operator
+|,bitwise-operator
+^,bitwise-operator
+~,bitwise-operator
+<<,shift-operator
+>>,shift-operator
+>>>,shift-operator
 --,unary-operator
 ++,unary-operator
