@@ -3,12 +3,14 @@ package main.java.model;
 public class Token {
     private final String lexeme; // The actual string representation of the token inputted by the user
     private final String tokenType; // Must be in title case format
-    private int occurrence; // Number of lexeme occurrence
+    private final int lineNumber;
+    private final int columnNumber;
 
-    public Token(String lexeme, String tokenType) {
+    public Token(String lexeme, String tokenType, int lineNumber, int columnNumber) {
         this.lexeme = lexeme;
         this.tokenType = tokenType;
-        this.occurrence = 1;
+        this.lineNumber = lineNumber;
+        this.columnNumber = columnNumber;
     }
 
     public String getLexeme() {
@@ -19,11 +21,12 @@ public class Token {
         return tokenType;
     }
 
-    public int getOccurrence() {
-        return occurrence;
+    public int getLineNumber() {
+        return lineNumber;
     }
 
-    public void setOccurrence(int ctr){
-        occurrence = ctr;
+    public int getColumnNumber() {
+        return columnNumber;
     }
+
 }
