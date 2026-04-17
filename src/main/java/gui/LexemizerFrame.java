@@ -2,6 +2,9 @@ package main.java.gui;
 
 import java.awt.*;
 import javax.swing.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import main.java.gui.popups.*;
 import main.java.model.Token;
@@ -10,10 +13,8 @@ import main.java.tokenizer.Tokenizer;
 public class LexemizerFrame extends JFrame {
 
     //panel
-    private CodePanel   codePanel;
-    private ResultPanel lexemePanel;
-    private ResultPanel occurrencePanel;
-    private ResultPanel tokenPanel;
+    private CodePanel codePanel;
+    private ResultPanel outputPanel;
     private HeaderPanel headerPanel;
     private Tokenizer tokenizer;
 
@@ -36,9 +37,7 @@ public class LexemizerFrame extends JFrame {
     private void init(){
         headerPanel = new HeaderPanel();
         codePanel = new CodePanel(this);
-        lexemePanel = new ResultPanel("LEXEME");
-        occurrencePanel = new ResultPanel("OCCURRENCE");
-        tokenPanel = new ResultPanel("TOKEN");
+        outputPanel = new ResultPanel("OUTPUT");
     }
 
     private void initWindow() {
@@ -51,8 +50,7 @@ public class LexemizerFrame extends JFrame {
 
     private void layoutComponents() {
         add(headerPanel, BorderLayout.NORTH);
-        
-        //sa spacing ng bawat panel 
+
         JPanel wrapper = new JPanel(new GridBagLayout());
         wrapper.setOpaque(false);
         wrapper.setBorder(BorderFactory.createEmptyBorder(0, 18, 18, 18));
@@ -60,61 +58,54 @@ public class LexemizerFrame extends JFrame {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weighty = 1.0;
-        gbc.insets = new Insets(0, 0, 0, 7);
+        gbc.insets = new Insets(0, 0, 0, 8);
 
-        //code panel
-        gbc.weightx = 2.5;
+        gbc.weightx = 1.0;
         gbc.gridx = 0;
         wrapper.add(codePanel, gbc);
 
-        //lexeme
-        gbc.weightx = 1.5;
-        gbc.gridx = 1;
-        wrapper.add(lexemePanel, gbc);
-
-        //occurrence
         gbc.weightx = 1.0;
-        gbc.gridx = 2;
-        wrapper.add(occurrencePanel, gbc);
-
-        //token
-        gbc.weightx = 2.0;
-        gbc.gridx = 3;
-        wrapper.add(tokenPanel, gbc);
+        gbc.gridx = 1;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        wrapper.add(outputPanel, gbc);
 
         add(wrapper, BorderLayout.CENTER);
     }
 
-    //pangtrial lang toh 
-    public void onGetToken(String sourceCode) { 
+    public void onGetToken(String sourceCode) {
         this.tokenizer.emptyTokens();
 
-         String[] lines = sourceCode.split("\n");
+<<<<<<< HEAD
+        ArrayList<String> lines = new ArrayList<>(Arrays.asList(sourceCode.split("\n", -1)));
+        // find first non-blank line number
+        int firstLine = 1;
+        for (int i = 0; i < lines.size(); i++) {
+            if (!lines.get(i).isBlank()) { firstLine = i + 1; break; }
+=======
+         String[] lines = sourceCode.split("\\s+\\r\\n|(?<=[;=(){}\\[\\].])|(?=[;=(){}\\[\\].])");
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i];
             if (!line.isBlank()) {
                 tokenizer.tokenize(line);
             }
+>>>>>>> f9c63324c50fbaa2b84a9955f6c420d32157d48a
         }
+        tokenizer.tokenizeLines(lines, firstLine);
 
-        lexemePanel.clearRows();
-        occurrencePanel.clearRows();
-        tokenPanel.clearRows();
+        outputPanel.clearRows();
 
         List<Token> tokens = tokenizer.getTokens();
         for (Token t : tokens) {
-            lexemePanel.addRow(t.getLexeme());
-            occurrencePanel.addRow(String.valueOf(t.getOccurrence()));
-            tokenPanel.addRow(t.getTokenType());
+            String row = String.format("[%d:%d]  %-20s %s",
+                t.getLineNumber(), t.getColumnNumber(),
+                t.getLexeme(), t.getTokenType());
+            outputPanel.addRow(row);
         }
     }
 
-    //toh ren trail lang
     public void onClear() {
-        lexemePanel.clearRows();
-        tokenPanel.clearRows();
+        outputPanel.clearRows();
         tokenizer.emptyTokens();
-        occurrencePanel.clearRows();
     }
 
     public void start() {

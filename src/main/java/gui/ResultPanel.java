@@ -34,10 +34,10 @@ public class ResultPanel extends RoundedPanel {
     }
 
     private JLabel buildHeader() {
-        JLabel lbl = new JLabel(title, SwingConstants.CENTER);
+        JLabel lbl = new JLabel(title, SwingConstants.LEFT); 
         lbl.setFont(HEADER_FONT);
         lbl.setForeground(LexemizerFrame.FG_WHITE);
-        lbl.setBorder(new EmptyBorder(10, 12, 10, 12));
+        lbl.setBorder(new EmptyBorder(10, 16, 10, 12));
         lbl.setOpaque(false);
         return lbl;
     }
@@ -64,14 +64,50 @@ public class ResultPanel extends RoundedPanel {
     private void layoutComponents() {
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
-        top.add(headerLabel, BorderLayout.CENTER);
+        top.add(headerLabel, BorderLayout.WEST);
+
+        // CLEAR button on the right side of output header
+        JButton clearBtn = buildClearButton();
+        JPanel btnWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 6));
+        btnWrapper.setOpaque(false);
+        btnWrapper.add(clearBtn);
+        top.add(btnWrapper, BorderLayout.EAST);
+
+        clearBtn.addActionListener(e -> clearRows());
 
         JSeparator sep = new JSeparator();
         sep.setForeground(new Color(0x2A2550));
-        top.add(sep, BorderLayout.SOUTH);
 
-        add(top,        BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
+        JPanel topWrapper = new JPanel(new BorderLayout());
+        topWrapper.setOpaque(false);
+        topWrapper.add(top, BorderLayout.CENTER);
+        topWrapper.add(sep, BorderLayout.SOUTH);
+
+        add(topWrapper,  BorderLayout.NORTH);
+        add(scrollPane,  BorderLayout.CENTER);
+    }
+
+    private JButton buildClearButton() {
+        JButton btn = new JButton("CLEAR") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isPressed() ? new Color(0x8B5CF6) : new Color(0xFFFFFF));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btn.setFont(new Font("Arial", Font.BOLD, 13));
+        btn.setForeground(LexemizerFrame.BG_DARK);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setOpaque(false);
+        btn.setPreferredSize(new Dimension(100, 37));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return btn;
     }
 
     private void styleScrollBar(JScrollBar scrollBar) {
