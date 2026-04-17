@@ -4,11 +4,11 @@ import javax.swing.*;
 
 public class WcPop extends Popup {
 
-    private static final String MSG = "This is Lexemizer.java! A tokenizer for Java. Would you like to see a quick tutorial on how to use the application?";
+    private static final String MSG = "This is compy.io! A compiler for Java. Would you like to see a quick tutorial on how to use the application?";
     
     public WcPop(Frame parent) {
         super(parent, "WELCOME!", MSG, new ImageIcon(
-            new ImageIcon("src/main/java/gui/resources/Lexemizer.png")
+            new ImageIcon("src/main/java/gui/resources/compy.io.png")
             .getImage()
             .getScaledInstance(150, 75, Image.SCALE_SMOOTH)
         ));

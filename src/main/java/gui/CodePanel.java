@@ -83,7 +83,7 @@ public class CodePanel extends RoundedPanel {
         btnRow.setOpaque(false);
 
         JButton clearBtn    = buildButton("CLEAR", false);
-        JButton getTokenBtn = buildButton("RUN", true);
+        JButton getTokenBtn = buildButton("COMPILE", true);
 
         btnRow.add(clearBtn);
         btnRow.add(getTokenBtn);
