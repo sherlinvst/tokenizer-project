@@ -75,20 +75,12 @@ public class LexemizerFrame extends JFrame {
     public void onGetToken(String sourceCode) {
         this.tokenizer.emptyTokens();
 
-<<<<<<< HEAD
         ArrayList<String> lines = new ArrayList<>(Arrays.asList(sourceCode.split("\n", -1)));
         // find first non-blank line number
         int firstLine = 1;
         for (int i = 0; i < lines.size(); i++) {
             if (!lines.get(i).isBlank()) { firstLine = i + 1; break; }
-=======
-         String[] lines = sourceCode.split("\\s+\\r\\n|(?<=[;=(){}\\[\\].])|(?=[;=(){}\\[\\].])");
-        for (int i = 0; i < lines.length; i++) {
-            String line = lines[i];
-            if (!line.isBlank()) {
-                tokenizer.tokenize(line);
-            }
->>>>>>> f9c63324c50fbaa2b84a9955f6c420d32157d48a
+
         }
         tokenizer.tokenizeLines(lines, firstLine);
 
