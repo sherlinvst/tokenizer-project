@@ -1,14 +1,12 @@
 package main.java.compiler.parser.expression;
 import main.java.compiler.parser.ast.ASTNode;
-import main.java.model.Token;
 
 public class AssignExp extends ASTNode {
+    public final ASTNode target; // was Token name — now any lvalue
     public final ASTNode value;
-    public final Token name;
-    
-    public AssignExp(Token name, ASTNode value){
-        super(name.getLineNumber(), name.getColumnNumber());
+    public AssignExp(ASTNode target, ASTNode value) {
+        super(target.lineNumber, target.columnNumber);
+        this.target = target;
         this.value = value;
-        this.name = name;
     }
 }
