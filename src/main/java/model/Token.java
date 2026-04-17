@@ -29,4 +29,14 @@ public class Token {
         return columnNumber;
     }
 
+    @Override
+    public String toString() {
+        return "Token{" +
+                "lexeme='" + lexeme + '\'' +
+                ", tokenType='" + tokenType + '\'' +
+                ", line=" + lineNumber +
+                ", col=" + columnNumber +
+                '}';
+    }
+
 }

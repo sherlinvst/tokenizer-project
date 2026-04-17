@@ -1,6 +1,8 @@
 package main.java.compiler.parser;
 import main.java.compiler.parser.ast.ASTNode;
+import main.java.compiler.parser.type.TypeNode;
 import main.java.compiler.parser.declaration.*;
+import main.java.compiler.parser.error.ErrorNode;
 import main.java.compiler.parser.statement.*;
 import main.java.compiler.parser.expression.*;
 import main.java.model.Token;
@@ -8,30 +10,39 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
+    private enum ParseContext { TOP_LEVEL, CLASS_BODY, METHOD_BODY }
+    private ParseContext context = ParseContext.TOP_LEVEL;
     private List<Token> tokens;
+    private ArrayList<ParseError> errors = new ArrayList<>();
     private int current = 0;
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
     }
+    
+    public ArrayList<ParseError> getErrors() { return errors; }
 
-    private Token peek() {
-        // check current token
-        return tokens.get(current);
+    private void reportError(String message, int line, int col) {
+        errors.add(new ParseError("SYNTAX ERROR: " +message + " at line " + line + ", column " + col, line, col));
     }
 
-    private Token checkNext(){
-        // check next token without consuming
-        if (current + 1 < tokens.size()) return tokens.get(current + 1);
-        return tokens.get(tokens.size() - 1);// no more tokens
-    }
+      private static final Token EOF_TOKEN = new Token("EOF", "EOF", -1, -1);
 
-    private Token next () {
-        // consume current token and move to next one
-        Token token = tokens.get(current);
-        current++;
-        return token;
-    }
+      private Token peek() {
+          if (current >= tokens.size()) return EOF_TOKEN;
+          return tokens.get(current);
+      }
+
+      private Token checkNext() {
+          int nextIndex = current + 1;
+          if (nextIndex >= tokens.size()) return EOF_TOKEN;
+          return tokens.get(nextIndex);
+      }
+
+      private Token next() {
+          if (current >= tokens.size()) return EOF_TOKEN;
+          return tokens.get(current++);
+      }
 
     private boolean checkToken(String tokenType) {
         // check if current token matches expected type
@@ -43,21 +54,28 @@ public class Parser {
         return peek().getLexeme().equals(lexeme);
     }
 
-    private Token expectedToken (String tokenType, String errorMessage){
-        // check if matches then throw error if not
+    private Token expectedToken(String tokenType, String errorMessage) {
         if (!checkToken(tokenType)) {
-            throw new ParseError(errorMessage + ", got '" + peek().getLexeme() + "'", peek().getLineNumber(), peek().getColumnNumber());
+            reportError(errorMessage + tokenType + "', got '" + peek().getLexeme() + "'", peek().getLineNumber(), peek().getColumnNumber());
+            if (!isEnd()) next();
+            return EOF_TOKEN;
         }
         return next();
     }
 
-    private Token expectedLexeme (String lexeme){
-        // check if matches then throw error if not
+    private Token expectedLexeme(String lexeme) {
         if (!checkLexeme(lexeme)) {
-            throw new ParseError("Expected '" + lexeme + "', got '" + peek().getLexeme() + "'", peek().getLineNumber(), peek().getColumnNumber());
+
+        if (isEnd()) return EOF_TOKEN;
+
+        reportError("Expected '" + lexeme + "', got '" + peek().getLexeme() + "'",
+                    peek().getLineNumber(), peek().getColumnNumber());
+
+        next();
+        return EOF_TOKEN;
         }
         return next();
-    } 
+    }
 
     private boolean matchLexeme (String lexeme) {
         // check if matches then consume and return true, else return false
@@ -75,15 +93,56 @@ public class Parser {
 
     // checks if the next thing is a declaration or a plain statement
     private ASTNode declOrStmt() {
-        // for class declaration
-        if (checkLexeme("class")) return classDecl();
+        ArrayList<Token> modifiers = new ArrayList<>();
+        while (isAccessModifier(peek())) {
+            modifiers.add(next());
+        }
 
-        // check for method or variable declaration
+        if (checkLexeme("class")) {
+            if (context == ParseContext.TOP_LEVEL) {
+                return classDecl(modifiers);
+            } else {
+                // Allow class declarations in other contexts if needed
+                return classDecl(modifiers);
+            }
+        }
+
         if (isTypeToken(peek()) && isIdentifier(checkNext())) {
-            return varOrMethodDecl();
+            return varOrMethodDecl(modifiers);
+        }
+
+        // modifier without declaration is error
+        if (!modifiers.isEmpty()) {
+            reportError("Expected declaration after modifier", peek().getLineNumber(), peek().getColumnNumber());
+            return new ErrorNode(peek().getLineNumber(), peek().getColumnNumber());
         }
 
         return stmt();
+    }
+
+    private void recover() {
+        next(); // consume bad token
+
+        while (!isEnd() && !isRecoveryToken(peek())) {
+            next();
+        }
+    }
+
+    private void recoverExpression() {
+        while (!isEnd()) {
+            String lex = peek().getLexeme();
+            if (lex.equals(";") || lex.equals(")") || lex.equals("]") ||
+                lex.equals(",") || lex.equals("}")) {
+                break;
+            }
+            next();
+        }
+    }
+
+    private boolean isCompoundAssign() {
+        String lex = peek().getLexeme();
+        return lex.equals("+=") || lex.equals("-=") ||
+              lex.equals("*=") || lex.equals("/=") || lex.equals("%=");
     }
 
     // check type of token
@@ -99,77 +158,168 @@ public class Parser {
         return token.getTokenType().equals("Identifier");
     }
 
-    // check if variable or method declaration
-    private ASTNode varOrMethodDecl() {
-        Token type = next();   // consume type
-        Token name = next();   // cnnsume identifier
-
-        // if next is '(' then method
-        if (checkLexeme("(")) return methodDecl(type, name);
-
-        // else var
-        ASTNode init = null;
-        if (matchLexeme("=")) {
-            init = expression();
-        }
-        expectedLexeme(";");
-        return new VarDecl(type, name, init);
+    private boolean isAccessModifier(Token token) {
+        String lexeme = token.getLexeme();
+        return lexeme.equals("public")    || lexeme.equals("private") ||
+              lexeme.equals("protected") || lexeme.equals("static")  ||
+              lexeme.equals("final");
     }
 
-    private MethodDecl methodDecl(Token returnType, Token name) {
+    private boolean isCastFollower() {
+        String lex = peek().getLexeme();
+        String type = peek().getTokenType();
+        return type.equals("Identifier")       ||
+              type.equals("Numeric Literal")  ||
+              type.equals("Boolean Literal")  ||
+              type.equals("String Literal")   ||
+              lex.equals("(")  || lex.equals("!")  ||
+              lex.equals("-")  || lex.equals("++") ||
+              lex.equals("--") || lex.equals("new");
+    }
+
+    private boolean isRecoveryToken(Token t) {
+        String lex = t.getLexeme();
+
+        return lex.equals(";") ||
+              lex.equals("}") ||
+              lex.equals("{") ||
+              lex.equals("class") ||
+              lex.equals("if") ||
+              lex.equals("for") ||
+              lex.equals("while") ||
+              lex.equals("return");
+    }
+
+
+    // check if variable or method declaration
+    private ASTNode varOrMethodDecl(ArrayList<Token> modifiers) {
+        TypeNode type = type();
+        Token name = next();
+
+        if (checkLexeme("(")) {
+            // Methods only allowed at class body or top level
+            if (context == ParseContext.METHOD_BODY) {
+                reportError("Method declarations not allowed inside a method", name.getLineNumber(), name.getColumnNumber());
+            }
+            return methodDecl(modifiers, type, name);
+        }
+
+        if (context == ParseContext.METHOD_BODY) {
+            for (Token mod : modifiers) {
+                if (mod.getLexeme().equals("static") || mod.getLexeme().equals("public") ||
+                    mod.getLexeme().equals("private") || mod.getLexeme().equals("protected")) {
+                    reportError("Modifier '" + mod.getLexeme() + "' not allowed on local variable", mod.getLineNumber(), mod.getColumnNumber());
+                }
+            }
+        }
+
+        ASTNode init = null;
+        if (matchLexeme("=")) init = expression();
+        expectedLexeme(";");
+        return new VarDecl(modifiers, type, name, init);
+    }
+
+    private MethodDecl methodDecl(ArrayList<Token> modifiers, TypeNode returnType, Token name) {
         expectedLexeme("(");
         ArrayList<VarDecl> params = new ArrayList<>();
 
         if (!checkLexeme(")")) {
             while (true){
-                Token paramType = next();
+                TypeNode paramType = type();
                 Token paramName = next();
-                params.add(new VarDecl(paramType, paramName, null));
+                params.add(new VarDecl(new ArrayList<>(), paramType, paramName, null));
                 if (!matchLexeme(",")) break;
             }
         }
-
         expectedLexeme(")");
-        BlockStmt body = block();
-        return new MethodDecl(returnType, name, params, body);
-    }
 
-    private ClassDecl classDecl() {
-        expectedLexeme("class");
-        Token name = expectedToken("Identifier", "Expected class name");
-        expectedLexeme("{");
-
-        ArrayList<ASTNode> members = new ArrayList<>();
-        while (!checkLexeme("}") && !isEnd()) {
-            members.add(declOrStmt());
+        ArrayList<TypeNode> throwsClause = new ArrayList<>();
+        if (matchLexeme("throws")) {
+            do {
+                throwsClause.add(baseType());
+            } while (matchLexeme(","));
         }
 
+        ParseContext savedContext = context;
+        context = ParseContext.METHOD_BODY;
+        BlockStmt body = block();
+        context = savedContext;
+        return new MethodDecl(modifiers, returnType, name, throwsClause, params, body);
+    }
+
+    private ASTNode classDecl(ArrayList<Token> modifiers) {
+        expectedLexeme("class");
+        Token name = expectedToken("Identifier", "Expected class name");
+
+        TypeNode superClass = null;
+        if (matchLexeme("extends")) superClass = baseType();
+
+        ArrayList<TypeNode> interfaces = new ArrayList<>();
+        if (matchLexeme("implements")) {
+            do {
+                interfaces.add(baseType());
+            } while (matchLexeme(","));
+        }
+
+        expectedLexeme("{");
+        ArrayList<ASTNode> members = new ArrayList<>();
+        context = ParseContext.CLASS_BODY;
+        while (!checkLexeme("}") && !isEnd()) {
+            try {
+                members.add(declOrStmt());
+            } catch (ParseError e) {
+                errors.add(e);
+                recover();;
+            }
+        }
+        context = ParseContext.TOP_LEVEL;
+
         expectedLexeme("}");
-        return new ClassDecl(name, members);
+        return new ClassDecl(modifiers, name, superClass, interfaces, members);
     }
 
     // for statements
     private ASTNode stmt() {
-        if (checkLexeme("{"))      return block();
-        if (checkLexeme("if"))     return ifStmt();
-        if (checkLexeme("while"))  return whileStmt();
-        if (checkLexeme("for"))    return forStmt();
-        if (checkLexeme("return")) return returnStmt();
+        try {
+            if (checkLexeme("{")) return block();
+            if (checkLexeme("if")) return ifStmt();
+            if (checkLexeme("while")) return whileStmt();
+            if (checkLexeme("for")) return forStmt();
+            if (checkLexeme("return")) return returnStmt();
 
-        // else expression statement
-        ASTNode expr = expression();
-        expectedLexeme(";");
-        return new ExprStmt(expr, expr.lineNumber, expr.columnNumber);
+            ASTNode expr = expression();
+
+            if (expr instanceof ErrorNode) {
+                recover();
+                return new ErrorNode(expr.lineNumber, expr.columnNumber);
+            }
+
+            expectedLexeme(";");
+            return new ExprStmt(expr, expr.lineNumber, expr.columnNumber);
+
+        } catch (ParseError e) {
+            errors.add(e);
+            recover();
+            return new ErrorNode(peek().getLineNumber(), peek().getColumnNumber());
+        }
     }
 
     private BlockStmt block() {
-        int line = peek().getLineNumber();
-        int col = peek().getColumnNumber();
-
+        int line = peek().getLineNumber(), col = peek().getColumnNumber();
         expectedLexeme("{");
         ArrayList<ASTNode> stmts = new ArrayList<>();
         while (!checkLexeme("}") && !isEnd()) {
-            stmts.add(declOrStmt());
+            try {
+                ASTNode node = declOrStmt();
+                if (node instanceof ErrorNode){
+                    reportError("Invalid statement", node.lineNumber, node.columnNumber);
+                } else {
+                    stmts.add(node);
+                }
+            } catch (ParseError e) {
+                errors.add(e);
+                recover();
+            }
         }
         expectedLexeme("}");
         return new BlockStmt(stmts, line, col);
@@ -213,9 +363,19 @@ public class Parser {
         // init (var decl, expression, or empty)
         ASTNode init = null;
         if (!checkLexeme(";")) {
+            // collect any modifiers (e.g. final int i = 0)
+            ArrayList<Token> modifiers = new ArrayList<>();
+            while (isAccessModifier(peek())) {
+                modifiers.add(next());
+            }
+
             if (isTypeToken(peek()) && isIdentifier(checkNext())) {
-                init = varOrMethodDecl(); // already consumes the semicolon
+                init = varOrMethodDecl(modifiers); // already consumes the semicolon
             } else {
+                // no modifiers expected before a plain expression
+                if (!modifiers.isEmpty()) {
+                  reportError("Unexpected modifier in for-init", peek().getLineNumber(), peek().getColumnNumber());
+                }
                 init = expression();
                 expectedLexeme(";");
             }
@@ -228,7 +388,7 @@ public class Parser {
         if (!checkLexeme(";")) condition = expression();
         expectedLexeme(";");
 
-        // update (may be empty)
+        // update (may be empty) and allows i++, i--, i += 1, i = i + 1
         ASTNode update = null;
         if (!checkLexeme(")")) update = expression();
         expectedLexeme(")");
@@ -249,23 +409,49 @@ public class Parser {
 
     // expression chain
     private ASTNode expression() {
-        return assignment();
+        try {
+          return assignment();
+      } catch (Exception e) {
+          reportError("Invalid expression", peek().getLineNumber(), peek().getColumnNumber());
+          recoverExpression();
+          return new ErrorNode(peek().getLineNumber(), peek().getColumnNumber());
+      }
+        
     }
 
     private ASTNode assignment() {
-        ASTNode left = orStmt();
+        ASTNode left = ternary();
 
-        if (checkLexeme("=")) {
-            Token equals = next();
-            ASTNode value = assignment(); // right-associative: recurse on itself
-            if (left instanceof IdentifierExp) {
-                return new AssignExp(((IdentifierExp) left).name, value);
+        if (checkLexeme("=") || isCompoundAssign()) {
+            Token op = next();
+            ASTNode value = assignment();
+
+            if (!(left instanceof IdentifierExp || left instanceof ArrAccessExp || left instanceof FieldAccessExp)) {
+                reportError("Invalid assignment target", op.getLineNumber(), op.getColumnNumber());
             }
-            throw new ParseError("Invalid assignment target", equals.getLineNumber(), equals.getColumnNumber());
+
+            if (op.getLexeme().equals("=")) {
+                return new AssignExp(left, value);  // store the whole lvalue, not just name
+            }
+            return new CompoundAssignExp(left, op, value);
         }
+
+        
 
         return left;
     }
+
+    private ASTNode ternary() {
+        ASTNode condition = orStmt();
+        if (checkLexeme("?")) {
+            next(); // consume '?'
+            ASTNode thenBranch = expression(); // full expression in the middle
+            expectedLexeme(":");
+            ASTNode elseBranch = ternary(); // right-associative
+            return new TernaryExp(condition, thenBranch, elseBranch);
+        }
+        return condition;
+      }
 
     private ASTNode orStmt() {
         ASTNode left = andStmt();
@@ -322,6 +508,12 @@ public class Parser {
     }
 
     private ASTNode unary() {
+        // increment and decrement
+        if (checkLexeme("++") || checkLexeme("--")) {
+            Token op = next();
+            ASTNode operand = unary();
+            return new PreFixExp(op, operand);
+        }
         if (checkLexeme("!") || checkLexeme("-")) {
             Token op = next();
             return new UnaryExp(op, unary()); // right recursive
@@ -333,18 +525,26 @@ public class Parser {
     private ASTNode postFix() {
         ASTNode expr = primary();
 
-        while (checkLexeme(".") || checkLexeme("(")) {
-            if (checkLexeme(".")) {
-                next(); // consume '.'
+        while (checkLexeme("[") || checkLexeme("++") || checkLexeme("--")
+               || checkLexeme(".")   || checkLexeme("(")) {
+            if (checkLexeme("[")) {
+                next();
+                ASTNode index = expression();
+                expectedLexeme("]");
+                expr = new ArrAccessExp(expr, index);
+            } else if (checkLexeme("++") || checkLexeme("--")) {
+                Token op = next();
+                expr = new PostFixExp(expr, op);
+            } else if (checkLexeme(".")) {
+                next();
                 Token memberName = expectedToken("Identifier", "Expected method or field name after '.'");
                 if (checkLexeme("(")) {
                     ArrayList<ASTNode> args = argList();
                     expr = new MethodCallExp(memberName, expr, args);
                 } else {
-                    expr = new IdentifierExp(memberName); // field access (simplified)
+                    expr = new FieldAccessExp(expr, memberName);
                 }
             } else if (checkLexeme("(") && expr instanceof IdentifierExp) {
-                // plain function call: foo(...)
                 ArrayList<ASTNode> args = argList();
                 expr = new MethodCallExp(((IdentifierExp) expr).name, null, args);
             } else {
@@ -367,11 +567,49 @@ public class Parser {
         return args;
     }
 
+    private TypeNode type() {
+        TypeNode base = baseType();
+        // consume array dimensions if present
+        int dims = 0;
+        while (checkLexeme("[") && nextIs("]")) {
+            next(); next(); // consume []
+            dims++;
+        }
+        return new TypeNode(base.baseName, base.typeArgs, dims, base.lineNumber, base.columnNumber);
+    }
+
+    private TypeNode baseType() {
+        int line = peek().getLineNumber(), col = peek().getColumnNumber();
+
+        Token t = peek();
+
+        if (!isTypeToken(t)) {
+            reportError("Expected type name, got '" + t.getLexeme() + "'", t.getLineNumber(), t.getColumnNumber());
+            return new TypeNode("error", new ArrayList<>(), 0, t.getLineNumber(), t.getColumnNumber());
+        }
+
+        next(); // consume the type
+
+        StringBuilder name = new StringBuilder(t.getLexeme());
+        while (checkLexeme(".") && checkNext().getTokenType().equals("Identifier")) {
+            next();
+            name.append(".").append(next().getLexeme());
+        }
+
+        ArrayList<TypeNode> typeArgs = new ArrayList<>();
+  
+        return new TypeNode(name.toString(), typeArgs, 0, line, col);
+    }
+
+    // helper: peek at token after next without consuming
+    private boolean nextIs(String lexeme) {
+        return current + 1 < tokens.size() && tokens.get(current + 1).getLexeme().equals(lexeme);
+    }
+
     // bottom of chain
     private ASTNode primary() {
         Token t = peek();
 
-        // Literals
         if (t.getTokenType().equals("Numeric Literal") ||
             t.getTokenType().equals("Float Literal")   ||
             t.getTokenType().equals("String Literal")  ||
@@ -381,29 +619,103 @@ public class Parser {
             return new LiteralExp(next());
         }
 
-        // Identifier (variable reference)
+        if (checkLexeme("{")) {
+            int line = t.getLineNumber(), col = t.getColumnNumber();
+            next();
+
+            ArrayList<ASTNode> elements = new ArrayList<>();
+            if (!checkLexeme("}")) {
+                do {
+                    elements.add(expression());
+                } while (matchLexeme(","));
+            }
+
+            expectedLexeme("}");
+            return new ArrInitExp(elements, line, col);
+        }
+
+        if (checkLexeme("new")) {
+            next();
+            TypeNode type = baseType();
+
+            if (checkLexeme("[")) {
+                next();
+
+                if (checkLexeme("]")) {
+                    next();
+                    expectedLexeme("{");
+
+                    ArrayList<ASTNode> elements = new ArrayList<>();
+                    if (!checkLexeme("}")) {
+                        do {
+                            elements.add(expression());
+                        } while (matchLexeme(","));
+                    }
+
+                    expectedLexeme("}");
+                    return new NewArrExp(type, null, elements);
+                } else {
+                    ASTNode size = expression();
+                    expectedLexeme("]");
+                    return new NewArrExp(type, size, null);
+                }
+            } else {
+                ArrayList<ASTNode> args = argList();
+                return new NewObjExp(type, args);
+            }
+        }
+
+        if (checkLexeme("this")) return new ThisExp(next());
+        if (checkLexeme("super")) return new SuperExp(next());
+        if (checkLexeme("null")) return new LiteralExp(next());
+
         if (t.getTokenType().equals("Identifier")) {
             return new IdentifierExp(next());
         }
 
-        // Grouped expression: (expr)
-        if (t.getLexeme().equals("(")) {
+        // -------------------------
+        // GROUPING OR CAST
+        // -------------------------
+        if (checkLexeme("(")) {
             next();
-            ASTNode inner = expression();
+            ASTNode expr = expression();
             expectedLexeme(")");
-            return inner;
+            return expr;
         }
 
-        throw new ParseError("Unexpected token '" + t.getLexeme() + "'", t.getLineNumber(), t.getColumnNumber());
+        if (checkLexeme("(") && isTypeToken(checkNext())) {
+            int saved = current;
+
+            next(); // (
+            TypeNode tNode = type();
+
+            if (checkLexeme(")")) {
+                next();
+
+                if (isCastFollower()) {
+                    return new CastExp(tNode, unary());
+                }
+            }
+
+            current = saved; // rollback
+        }
+
+        reportError("Expected expression", t.getLineNumber(), t.getColumnNumber());
+        next();
+        return new ErrorNode(t.getLineNumber(), t.getColumnNumber());
     }
     
-    public ArrayList<ASTNode> parse(){
+    public ArrayList<ASTNode> parse() {
         ArrayList<ASTNode> astNodes = new ArrayList<>();
-
         while (!isEnd()) {
-            astNodes.add(declOrStmt());
+            try {
+                ASTNode node = declOrStmt();
+                if (!(node instanceof ErrorNode)) astNodes.add(node);
+            } catch (ParseError e) {
+                errors.add(e);
+                recover();
+            }
         }
-
         return astNodes;
     }
 }
