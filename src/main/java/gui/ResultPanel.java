@@ -13,7 +13,7 @@ public class ResultPanel extends RoundedPanel {
     private final List<String> rows = new ArrayList<>();
 
     private JLabel headerLabel;
-    private JPanel rowContainer;
+    private JTextArea outputArea;
     private JScrollPane scrollPane;
 
     private static final Font HEADER_FONT = new Font("Courier New", Font.BOLD,  13);
@@ -29,7 +29,6 @@ public class ResultPanel extends RoundedPanel {
     private void init(){
         setLayout(new BorderLayout());
         headerLabel = buildHeader();
-        rowContainer = new JPanel();
         scrollPane = buildScrollPane();
     }
 
@@ -43,20 +42,24 @@ public class ResultPanel extends RoundedPanel {
     }
 
     private JScrollPane buildScrollPane() {
-        rowContainer.setLayout(new BoxLayout(rowContainer, BoxLayout.Y_AXIS));
-        rowContainer.setOpaque(false);
-        rowContainer.setBorder(new EmptyBorder(4, 8, 4, 8));
+        outputArea = new JTextArea();
+        outputArea.setFont(ROW_FONT);
+        outputArea.setForeground(LexemizerFrame.FG_WHITE);
+        outputArea.setBackground(LexemizerFrame.PANEL_BG);
 
-        JScrollPane sp = new JScrollPane(rowContainer);
+        outputArea.setEditable(false);
+        outputArea.setLineWrap(false);
+        outputArea.setBorder(new EmptyBorder(8, 8, 8, 8));
+
+        JScrollPane sp = new JScrollPane(outputArea);
         sp.setBorder(BorderFactory.createEmptyBorder());
         sp.setOpaque(false);
-        sp.getViewport().setOpaque(false);
+        sp.getViewport().setOpaque(true);
         sp.getViewport().setBackground(LexemizerFrame.PANEL_BG);
-        sp.setBackground(LexemizerFrame.PANEL_BG);
-        sp.getVerticalScrollBar().setUnitIncrement(16);
 
+        // Apply your custom scrollbar
         styleScrollBar(sp.getVerticalScrollBar());
-        styleScrollBar(sp.createHorizontalScrollBar());
+        styleScrollBar(sp.getHorizontalScrollBar());
 
         return sp;
     }
@@ -142,28 +145,14 @@ public class ResultPanel extends RoundedPanel {
 
     public void addRow(String value) {
         rows.add(value);
-
-        JLabel lbl = new JLabel(value);
-        lbl.setFont(ROW_FONT);
-        lbl.setForeground(LexemizerFrame.FG_WHITE);
-        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
-        lbl.setBorder(new EmptyBorder(3, 4, 3, 4));
-
-        rowContainer.add(lbl);
-        rowContainer.add(Box.createVerticalStrut(2));
-        rowContainer.revalidate();
-        rowContainer.repaint();
+        outputArea.append(value + "\n"); 
     }
 
-    //pang trial lang toh
     public void clearRows() {
         rows.clear();
-        rowContainer.removeAll();
-        rowContainer.revalidate();
-        rowContainer.repaint();
+        outputArea.setText("");
     }
-
-    //pang trial lang toh
+ 
     public List<String> getRows() {
         return new ArrayList<>(rows);
     }
