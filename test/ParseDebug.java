@@ -2,6 +2,8 @@ package test;
 
 import main.java.compiler.parser.ast.ASTNode;
 import main.java.compiler.parser.statement.*;
+import main.java.compiler.parser.type.TypeNode;
+import main.java.model.Token;
 import main.java.compiler.parser.expression.*;
 import main.java.compiler.parser.declaration.*;
 
@@ -70,15 +72,23 @@ public class ParseDebug {
     }
 
     private void printVarDecl(VarDecl n) {
-        line("VarDecl: " + n.name.getLexeme());
+        StringBuilder mods = new StringBuilder();
+        for (Token m : n.modifiers) {
+            mods.append(m.getLexeme()).append(" ");
+        }
+
+        line("VarDecl: " 
+            + mods 
+            + typeToString(n.type) 
+            + " " 
+            + n.name.getLexeme());
+
         if (n.init != null) {
             indent++;
-            line("initializer:");
-            indent++;
             print(n.init);
-            indent -= 2;
+            indent--;
         }
-    } 
+    }
 
     private void printMethod(MethodDecl n) {
         line("MethodDecl: " + n.name.getLexeme());
@@ -133,11 +143,17 @@ public class ParseDebug {
     }
 
     private void printAssign(AssignExp n) {
-        line("AssignExpr: " + n.name.getLexeme() + " =");
+        line("AssignExpr:");
         indent++;
+
+        print(n.target);
+        line("=");
         print(n.value);
+
         indent--;
     }
+
+    
 
     private void line(String text) {
         StringBuilder sb = new StringBuilder();
@@ -145,4 +161,28 @@ public class ParseDebug {
         sb.append(text);
         System.out.println(sb.toString());
     }
+
+    private String typeToString(TypeNode type) {
+    StringBuilder sb = new StringBuilder();
+
+    // base type
+    sb.append(type.baseName);
+
+    // generics (if you support later)
+    if (type.typeArgs != null && !type.typeArgs.isEmpty()) {
+        sb.append("<");
+        for (int i = 0; i < type.typeArgs.size(); i++) {
+            sb.append(typeToString(type.typeArgs.get(i)));
+            if (i < type.typeArgs.size() - 1) sb.append(", ");
+        }
+        sb.append(">");
+    }
+
+    // array dimensions
+    for (int i = 0; i < type.dimension; i++) {
+        sb.append("[]");
+    }
+
+    return sb.toString();
+}
 }
