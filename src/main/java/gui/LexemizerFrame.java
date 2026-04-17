@@ -80,6 +80,10 @@ public class LexemizerFrame extends JFrame {
         int firstLine = 1;
         for (int i = 0; i < lines.size(); i++) {
             if (!lines.get(i).isBlank()) { firstLine = i + 1; break; }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3223f6430d3a809eeb49ed57d56c3f696d87166e
         }
         tokenizer.tokenizeLines(lines, firstLine);
 
