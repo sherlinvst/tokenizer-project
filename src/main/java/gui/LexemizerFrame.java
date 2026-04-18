@@ -89,8 +89,12 @@ public class LexemizerFrame extends JFrame {
         // System.out.println("Parse successful. " + ast.size() + " top-level nodes.");
         
         // pang-display ng errors
-        // for (ParseError error : parser.getErrors()) {
-        //     outputPanel.addRow(error.getMessage());
+        // if (parser.getErrors().isEmpty()) {
+        //     outputPanel.addRow("No parse errors found.");
+        // } else {
+        //    for (ParseError error : parser.getErrors()) {
+        //        outputPanel.addRow(error.getMessage());
+        //    }
         // }
         outputPanel.clearRows();
 
