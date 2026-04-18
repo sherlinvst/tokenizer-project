@@ -15,7 +15,7 @@ public class HeaderPanel extends JPanel {
         setLayout(new FlowLayout(FlowLayout.CENTER, 0, 18));
         setBorder(new EmptyBorder(12, 0, 4, 0));
 
-        ImageIcon originalIcon = new ImageIcon(getClass().getResource("resources/Lexemizer.png"));
+        ImageIcon originalIcon = new ImageIcon(getClass().getResource("resources/compy.io.png"));
         //para sa sizing
         int newWidth = 260;
         int newHeight = 90; 

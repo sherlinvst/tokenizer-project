@@ -19,6 +19,7 @@ public class ParseDebug {
         else if (node instanceof BlockStmt)      printBlock((BlockStmt) node);
         else if (node instanceof IfStmt)         printIf((IfStmt) node);
         else if (node instanceof WhileStmt)      printWhile((WhileStmt) node);
+        else if (node instanceof ForStmt)      printFor((ForStmt) node);
         else if (node instanceof ReturnStmt)     printReturn((ReturnStmt) node);
         else if (node instanceof ExprStmt)       { line("ExprStmt"); indent++; print(((ExprStmt)node).exp); indent--; }
         else if (node instanceof BinaryExp)     printBinary((BinaryExp) node);
@@ -27,6 +28,9 @@ public class ParseDebug {
         else if (node instanceof LiteralExp)    line("Literal: " + ((LiteralExp)node).value.getLexeme());
         else if (node instanceof IdentifierExp) line("Identifier: " + ((IdentifierExp)node).name.getLexeme());
         else if (node instanceof MethodCallExp) printCall((MethodCallExp) node);
+        else if (node instanceof PreFixExp)        printPreFix((PreFixExp) node);
+        else if (node instanceof PostFixExp)       printPostFix((PostFixExp) node);
+        else if (node instanceof CompoundAssignExp) printCompoundAssign((CompoundAssignExp) node);
         else line("Unknown node: " + node.getClass().getSimpleName());
     }
 
@@ -62,6 +66,16 @@ public class ParseDebug {
         indent--;
     }
 
+    private void printFor(ForStmt n) {
+        line("ForStmt");
+        indent++;
+        line("init:"); indent++; print(n.init); indent--;
+        line("condition:"); indent++; print(n.condition); indent--;
+        line("update:"); indent++; print(n.update); indent--;
+        line("body:"); indent++; print(n.body); indent--;
+        indent--;
+    }
+
     private void printReturn(ReturnStmt n) {
         line("ReturnStmt");
         if (n.value != null) {
@@ -91,7 +105,7 @@ public class ParseDebug {
     }
 
     private void printMethod(MethodDecl n) {
-        line("MethodDecl: " + n.name.getLexeme());
+        line("MethodDecl: " + typeToString(n.type) + " " + n.name.getLexeme());
         indent++;
         if (!n.params.isEmpty()) {
             line("parameters:");
@@ -143,7 +157,14 @@ public class ParseDebug {
     }
 
     private void printAssign(AssignExp n) {
-        line("AssignExpr:");
+        line("Assign:");
+        indent++;
+        line("target:");
+        indent++;
+        print(n.target);  
+        indent--;
+
+        line("value:");
         indent++;
 
         print(n.target);
@@ -151,9 +172,39 @@ public class ParseDebug {
         print(n.value);
 
         indent--;
+
+        indent--;
     }
 
-    
+    private void printPreFix(PreFixExp n) {
+        line("PrefixExp: " + n.operator.getLexeme());
+        indent++;
+        print(n.operand);
+        indent--;
+    }
+
+    private void printPostFix(PostFixExp n) {
+        line("PostfixExp: " + n.operator.getLexeme());
+        indent++;
+        print(n.operand);
+        indent--;
+    }
+
+    private void printCompoundAssign(CompoundAssignExp n) {
+        line("CompoundAssignExpr:");
+        indent++;
+        line("target:");
+        indent++;
+        print(n.target);  
+        indent--;
+
+        line("value:");
+        indent++;
+        print(n.value);
+        indent--;
+
+        indent--;
+    }
 
     private void line(String text) {
         StringBuilder sb = new StringBuilder();
@@ -163,26 +214,26 @@ public class ParseDebug {
     }
 
     private String typeToString(TypeNode type) {
-    StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
 
-    // base type
-    sb.append(type.baseName);
+        // base type
+        sb.append(type.baseName);
 
-    // generics (if you support later)
-    if (type.typeArgs != null && !type.typeArgs.isEmpty()) {
-        sb.append("<");
-        for (int i = 0; i < type.typeArgs.size(); i++) {
-            sb.append(typeToString(type.typeArgs.get(i)));
-            if (i < type.typeArgs.size() - 1) sb.append(", ");
+        // generics (if you support later)
+        if (type.typeArgs != null && !type.typeArgs.isEmpty()) {
+            sb.append("<");
+            for (int i = 0; i < type.typeArgs.size(); i++) {
+                sb.append(typeToString(type.typeArgs.get(i)));
+                if (i < type.typeArgs.size() - 1) sb.append(", ");
+            }
+            sb.append(">");
         }
-        sb.append(">");
-    }
 
-    // array dimensions
-    for (int i = 0; i < type.dimension; i++) {
-        sb.append("[]");
-    }
+        // array dimensions
+        for (int i = 0; i < type.dimension; i++) {
+            sb.append("[]");
+        }
 
-    return sb.toString();
-}
+        return sb.toString();
+    }
 }

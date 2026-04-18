@@ -31,8 +31,8 @@ public class CodePanel extends RoundedPanel {
         setBorder(new EmptyBorder(0, 0, 0, 0));
 
         lineCountLabel = buildLineCountLabel();
-        codeArea       = buildCodeArea();
-        lineNumbers    = buildLineNumberArea();
+        codeArea = buildCodeArea();
+        lineNumbers = buildLineNumberArea();
 
         layoutComponents();
         attachListeners();
@@ -73,18 +73,32 @@ public class CodePanel extends RoundedPanel {
     }
 
     private void layoutComponents() {
+        // Header row: line count label + buttons on right
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
-        top.add(lineCountLabel, BorderLayout.CENTER);
 
-        //yung horizontal line separator sa baba ng header
+        top.add(lineCountLabel, BorderLayout.WEST);
+
+        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
+        btnRow.setOpaque(false);
+
+        JButton clearBtn    = buildButton("CLEAR", false);
+        JButton getTokenBtn = buildButton("RUN", true);
+
+        btnRow.add(clearBtn);
+        btnRow.add(getTokenBtn);
+        top.add(btnRow, BorderLayout.EAST);
+
         JSeparator sep = new JSeparator();
         sep.setForeground(new Color(0x2A2550));
-        top.add(sep, BorderLayout.SOUTH);
 
-        add(top, BorderLayout.NORTH);
+        JPanel topWrapper = new JPanel(new BorderLayout());
+        topWrapper.setOpaque(false);
+        topWrapper.add(top, BorderLayout.CENTER);
+        topWrapper.add(sep, BorderLayout.SOUTH);
 
-        //scroll together with line numbers
+        add(topWrapper, BorderLayout.NORTH);
+
         JScrollPane scroll = new JScrollPane(codeArea);
         scroll.setRowHeaderView(lineNumbers);
         scroll.setBorder(BorderFactory.createEmptyBorder());
@@ -97,27 +111,6 @@ public class CodePanel extends RoundedPanel {
 
         add(scroll, BorderLayout.CENTER);
 
-        //buttons
-        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 10));
-        btnRow.setOpaque(false);
-
-        JButton clearBtn    = buildButton("CLEAR",false);
-        JButton getTokenBtn = buildButton("GET TOKEN", true);
-
-        btnRow.add(clearBtn);
-
-        JPanel rightAlign = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 10));
-        rightAlign.setOpaque(false);
-        rightAlign.add(getTokenBtn);
-
-        JPanel bottomRow = new JPanel(new BorderLayout());
-        bottomRow.setOpaque(false);
-        bottomRow.add(btnRow,     BorderLayout.WEST);
-        bottomRow.add(rightAlign, BorderLayout.EAST);
-
-        add(bottomRow, BorderLayout.SOUTH);
-
-        //action ng buttons clear and get token
         clearBtn.addActionListener((ActionEvent e) -> {
             String content = codeArea.getText().trim();
             if (content.isEmpty()) {
@@ -129,9 +122,9 @@ public class CodePanel extends RoundedPanel {
         });
 
         getTokenBtn.addActionListener((ActionEvent e) -> {
-            String content = codeArea.getText().trim(); //to avoid including spaces in counting tokens
+            String content = codeArea.getText().trim();
             if (content.isEmpty()) {
-                new WarnPop(frame, "The code area is empty. Please enter some code before proceeding to get token.").showPopup();
+                new WarnPop(frame, "The code area is empty. Please enter some code before proceeding.").showPopup();
             } else {
                 frame.onGetToken(content);
             }
@@ -171,7 +164,7 @@ public class CodePanel extends RoundedPanel {
         btn.setBorderPainted(false);
         btn.setContentAreaFilled(false);
         btn.setOpaque(false);
-        btn.setPreferredSize(new Dimension(130, 38));
+        btn.setPreferredSize(new Dimension(100, 34));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return btn;
     }
