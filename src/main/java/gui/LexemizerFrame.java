@@ -83,7 +83,15 @@ public class LexemizerFrame extends JFrame {
 
         }
         tokenizer.tokenizeLines(lines, firstLine);
+        // Parser parser = new Parser(tokenizer.getTokens());
+        // ArrayList<ASTNode> ast = parser.parse();
 
+        // System.out.println("Parse successful. " + ast.size() + " top-level nodes.");
+        
+        // pang-display ng errors
+        // for (ParseError error : parser.getErrors()) {
+        //     outputPanel.addRow(error.getMessage());
+        // }
         outputPanel.clearRows();
 
         List<Token> tokens = tokenizer.getTokens();
