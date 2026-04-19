@@ -9,6 +9,9 @@ import java.util.List;
 import main.java.gui.popups.*;
 import main.java.model.Token;
 import main.java.tokenizer.Tokenizer;
+import main.java.compiler.parser.Parser;
+import main.java.compiler.parser.ParseError;
+import main.java.compiler.parser.ast.ASTNode;
 
 public class LexemizerFrame extends JFrame {
 
@@ -73,28 +76,35 @@ public class LexemizerFrame extends JFrame {
     }
 
     public void onGetToken(String sourceCode) {
-        this.tokenizer.emptyTokens();
+        tokenizer.emptyTokens();
 
         ArrayList<String> lines = new ArrayList<>(Arrays.asList(sourceCode.split("\n", -1)));
-        // find first non-blank line number
+
         int firstLine = 1;
         for (int i = 0; i < lines.size(); i++) {
-            if (!lines.get(i).isBlank()) { firstLine = i + 1; break; }
-<<<<<<< HEAD
-=======
-
->>>>>>> 3223f6430d3a809eeb49ed57d56c3f696d87166e
+            if (!lines.get(i).isBlank()) {
+                firstLine = i + 1;
+                break;
+            }
         }
+
         tokenizer.tokenizeLines(lines, firstLine);
+        List<Token> tokens = tokenizer.getTokens();
 
         outputPanel.clearRows();
 
-        List<Token> tokens = tokenizer.getTokens();
-        for (Token t : tokens) {
-            String row = "[" + t.getLineNumber() + ":" + t.getColumnNumber() + "] "
-           + t.getLexeme() + " "
-           + t.getTokenType();
-            outputPanel.addRow(row);
+        Parser parser = new Parser(tokens);
+        ArrayList<ASTNode> ast = parser.parse();
+
+        if (parser.getErrors().isEmpty()) {
+            outputPanel.addRow("Compilation successful.");
+            outputPanel.addRow("AST Nodes: " + ast.size());
+        } else {
+            outputPanel.addRow("Compilation failed.\n");
+
+            for (ParseError err : parser.getErrors()) {
+                outputPanel.addRow(err.getMessage());
+            }
         }
     }
 
