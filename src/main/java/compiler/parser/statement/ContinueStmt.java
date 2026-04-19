@@ -1,0 +1,14 @@
+package main.java.compiler.parser.statement;
+
+import main.java.compiler.parser.ast.ASTNode;
+import main.java.model.Token;
+
+public class ContinueStmt extends ASTNode{
+    public final Token label;
+
+    public ContinueStmt(Token label, int line, int col) {
+        super(line, col);
+        this.label = label;
+    }
+  
+}

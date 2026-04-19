@@ -102,10 +102,10 @@ public class ParseDebug {
             print(n.init);
             indent--;
         }
-    } 
+    }
 
     private void printMethod(MethodDecl n) {
-        line("MethodDecl: " + n.name.getLexeme());
+        line("MethodDecl: " + typeToString(n.type) + " " + n.name.getLexeme());
         indent++;
         if (!n.params.isEmpty()) {
             line("parameters:");
@@ -157,7 +157,7 @@ public class ParseDebug {
     }
 
     private void printAssign(AssignExp n) {
-        line("CompoundAssignExpr:");
+        line("Assign:");
         indent++;
         line("target:");
         indent++;
@@ -166,7 +166,11 @@ public class ParseDebug {
 
         line("value:");
         indent++;
+
+        print(n.target);
+        line("=");
         print(n.value);
+
         indent--;
 
         indent--;
