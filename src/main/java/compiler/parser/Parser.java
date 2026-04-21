@@ -26,23 +26,23 @@ public class Parser {
         errors.add(new ParseError("SYNTAX ERROR: " +message + " at line " + line + ", column " + col, line, col));
     }
 
-      private static final Token EOF_TOKEN = new Token("EOF", "EOF", -1, -1);
+    private static final Token EOF_TOKEN = new Token("EOF", "EOF", -1, -1);
 
-      private Token peek() {
-          if (current >= tokens.size()) return EOF_TOKEN;
-          return tokens.get(current);
-      }
+    private Token peek() {
+        if (current >= tokens.size()) return EOF_TOKEN;
+        return tokens.get(current);
+    }
 
-      private Token checkNext() {
-          int nextIndex = current + 1;
-          if (nextIndex >= tokens.size()) return EOF_TOKEN;
-          return tokens.get(nextIndex);
-      }
+    private Token checkNext() {
+        int nextIndex = current + 1;
+        if (nextIndex >= tokens.size()) return EOF_TOKEN;
+        return tokens.get(nextIndex);
+    }
 
-      private Token next() {
-          if (current >= tokens.size()) return EOF_TOKEN;
-          return tokens.get(current++);
-      }
+    private Token next() {
+        if (current >= tokens.size()) return EOF_TOKEN;
+        return tokens.get(current++);
+    }
 
     private boolean checkToken(String tokenType) {
         // check if current token matches expected type
@@ -489,34 +489,35 @@ public class Parser {
         expectedLexeme("for");
         expectedLexeme("(");
 
-        // --- init ---
         ASTNode init = null;
         if (!checkLexeme(";")) {
             ArrayList<Token> modifiers = new ArrayList<>();
             while (isAccessModifier(peek())) modifiers.add(next());
 
-            if (isTypeToken(peek()) && isIdentifier(checkNext())) {
+            if (isTypeToken(peek()) && isDeclarationStart(checkNext())) {
                 TypeNode varType = type();
+
                 if (!isIdentifier(peek())) {
                     throw new ParseError(
                         "Expected variable name in for-init, got '" + peek().getLexeme() + "'",
                         peek().getLineNumber(), peek().getColumnNumber());
                 }
+
                 Token varName = next();
+
                 if (checkLexeme("(")) {
                     throw new ParseError("Method declaration not allowed in for-init",
                         varName.getLineNumber(), varName.getColumnNumber());
                 }
+
                 ASTNode varInit = null;
                 if (matchLexeme("=")) {
                     varInit = checkLexeme("{") ? arrInitExp() : expression();
                 }
-                expectedLexeme(";");
 
-                if (isTypeToken(peek()) && isDeclarationStart(checkNext())) {
-                    init = new VarDecl(modifiers, varType, varName, varInit);
-                }
-                
+                expectedLexeme(";");
+                init = new VarDecl(modifiers, varType, varName, varInit); // always assign — no if condition here
+
             } else {
                 if (!modifiers.isEmpty()) {
                     throw new ParseError("Unexpected modifier in for-init",
@@ -526,33 +527,29 @@ public class Parser {
                 expectedLexeme(";");
             }
         } else {
-            next();
+            next(); // consume ';'
         }
 
-        // --- condition ---
-        // If we're already at ')' or some garbage, skip gracefully
+        // condition
         ASTNode condition = null;
         if (!checkLexeme(";")) {
             try {
                 condition = expression();
             } catch (ParseError e) {
                 errors.add(e);
-                // skip to the next ';' or ')' so update can still be parsed
                 while (!isEnd() && !checkLexeme(";") && !checkLexeme(")")) next();
             }
         }
 
-        // consume the ';' after condition — report if missing but keep going
         if (!checkLexeme(";")) {
             reportError("Expected ';' after for-condition, got '" + peek().getLexeme() + "'",
                         peek().getLineNumber(), peek().getColumnNumber());
-            // skip to ')' so we can still parse the body
             while (!isEnd() && !checkLexeme(")") && !checkLexeme("{")) next();
         } else {
             next(); // consume ';'
         }
 
-        // --- update ---
+        // update
         ASTNode update = null;
         if (!checkLexeme(")")) {
             try {
