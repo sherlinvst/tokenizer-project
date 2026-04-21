@@ -7,13 +7,18 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.plaf.basic.BasicScrollBarUI;
+import javax.swing.text.StyledEditorKit;
 import main.java.gui.popups.WarnPop;
 
 public class CodePanel extends RoundedPanel {
 
     private  JLabel lineCountLabel;
-    private  JTextArea codeArea;
+    private  JTextPane codeArea;
     private  JTextArea lineNumbers;
+
+    private SyntaxHighlighter highlighter;
+    private Timer highlightTimer;
+    private boolean isHighlighting = false;
 
     private final LexemizerFrame frame;
 
@@ -48,17 +53,16 @@ public class CodePanel extends RoundedPanel {
         return lbl;
     }
 
-    private JTextArea buildCodeArea() {
-        JTextArea ta = new JTextArea();
-        ta.setFont(MONO);
-        ta.setBackground(LexemizerFrame.PANEL_BG);
-        ta.setForeground(LexemizerFrame.FG_WHITE);
-        ta.setCaretColor(LexemizerFrame.FG_WHITE);
-        ta.setSelectionColor(new Color(0x3D2B6E));
-        ta.setBorder(new EmptyBorder(4, 8, 4, 8));
-        ta.setLineWrap(false);
-        ta.setTabSize(4);
-        return ta;
+    private JTextPane buildCodeArea() {
+        JTextPane tp = new JTextPane();
+        tp.setFont(MONO);
+        tp.setBackground(LexemizerFrame.PANEL_BG);
+        tp.setForeground(LexemizerFrame.FG_WHITE);
+        tp.setCaretColor(LexemizerFrame.FG_WHITE);
+        tp.setSelectionColor(new Color(0x3D2B6E));
+        tp.setBorder(new EmptyBorder(4, 8, 4, 8));
+        tp.setEditorKit(new StyledEditorKit());
+        return tp;
     }
 
     private JTextArea buildLineNumberArea() {
@@ -83,7 +87,7 @@ public class CodePanel extends RoundedPanel {
         btnRow.setOpaque(false);
 
         JButton clearBtn    = buildButton("CLEAR", false);
-        JButton getTokenBtn = buildButton("RUN", true);
+        JButton getTokenBtn = buildButton("COMPILE", true);
 
         btnRow.add(clearBtn);
         btnRow.add(getTokenBtn);
@@ -202,18 +206,37 @@ public class CodePanel extends RoundedPanel {
 
     //para sa toh sa number line like para sync sya kapag nag new newline
     private void attachListeners() {
-        codeArea.getDocument().addDocumentListener(new DocumentListener() {
+        highlighter = new SyntaxHighlighter();
+        highlightTimer = new Timer(200, e -> 
+            applyHighlighting());
+            highlightTimer.setRepeats(false);
+
+        codeArea.getStyledDocument().addDocumentListener(new DocumentListener() {
             @Override
-            public void insertUpdate(DocumentEvent e)  { updateLineCount(); }
+            public void insertUpdate(DocumentEvent e)  { 
+                updateLineCount();
+                if(!isHighlighting)
+                    highlightTimer.restart();
+            }
             @Override
-            public void removeUpdate(DocumentEvent e)  { updateLineCount(); }
+            public void removeUpdate(DocumentEvent e)  {
+                updateLineCount(); 
+                if(!isHighlighting)
+                    highlightTimer.restart();
+            }
             @Override
-            public void changedUpdate(DocumentEvent e) { updateLineCount(); }
+            public void changedUpdate(DocumentEvent e) {}
         });
     }
 
+    public void applyHighlighting() {
+        isHighlighting = true;
+        highlighter.updateHighlighting(codeArea);
+        isHighlighting = false;
+    }
+
     private void updateLineCount() {
-        int lines = codeArea.getLineCount();
+        int lines = codeArea.getDocument().getDefaultRootElement().getElementCount();
         lineCountLabel.setText("Number of lines: " + lines);
         updateLineNumbers(lines);
     }

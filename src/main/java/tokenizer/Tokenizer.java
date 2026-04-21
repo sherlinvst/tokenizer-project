@@ -1,7 +1,7 @@
 package main.java.tokenizer;
 
-import main.java.model.Token;
 import java.util.ArrayList;
+import main.java.model.Token;
 
 public class Tokenizer extends TokenRecognizer {
     // temp class object to store token and column number
