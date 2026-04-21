@@ -5,13 +5,13 @@ import javax.swing.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import main.java.gui.popups.*;
-import main.java.model.Token;
 import main.java.tokenizer.Tokenizer;
 import main.java.compiler.parser.Parser;
 import main.java.compiler.parser.ParseError;
 import main.java.compiler.parser.ast.ASTNode;
+import main.java.compiler.semantic.SemanticAnalyzer;
+import main.java.compiler.semantic.SemanticError;
 
 public class LexemizerFrame extends JFrame {
 
@@ -89,36 +89,25 @@ public class LexemizerFrame extends JFrame {
         }
 
         tokenizer.tokenizeLines(lines, firstLine);
-<<<<<<< ours
-        List<Token> tokens = tokenizer.getTokens();
-
-=======
-        // Parser parser = new Parser(tokenizer.getTokens());
-        // ArrayList<ASTNode> ast = parser.parse();
-
-        // System.out.println("Parse successful. " + ast.size() + " top-level nodes.");
-        
-        // pang-display ng errors
-        // if (parser.getErrors().isEmpty()) {
-        //     outputPanel.addRow("No parse errors found.");
-        // } else {
-        //    for (ParseError error : parser.getErrors()) {
-        //        outputPanel.addRow(error.getMessage());
-        //    }
-        // }
->>>>>>> theirs
         outputPanel.clearRows();
 
-        Parser parser = new Parser(tokens);
+        Parser parser = new Parser(tokenizer.getTokens());
         ArrayList<ASTNode> ast = parser.parse();
+        SemanticAnalyzer analyzer = new SemanticAnalyzer();
+        analyzer.analyze(ast);
 
-        if (parser.getErrors().isEmpty()) {
+        if (parser.getErrors().isEmpty() && analyzer.getErrors().isEmpty()) {
             outputPanel.addRow("Compilation successful.");
-            outputPanel.addRow("AST Nodes: " + ast.size());
         } else {
             outputPanel.addRow("Compilation failed.\n");
 
             for (ParseError err : parser.getErrors()) {
+                outputPanel.addRow(err.getMessage());
+            }
+            
+            outputPanel.addRow("\n");
+
+            for (SemanticError err : analyzer.getErrors()) {
                 outputPanel.addRow(err.getMessage());
             }
         }
