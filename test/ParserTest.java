@@ -4,6 +4,8 @@ import main.java.compiler.parser.ParseError;
 import java.util.ArrayList;
 import main.java.compiler.parser.Parser;
 import main.java.compiler.parser.ast.ASTNode;
+import main.java.compiler.semantic.SemanticAnalyzer;
+import main.java.compiler.semantic.SemanticError;
 import main.java.model.Token;
 import main.java.tokenizer.Tokenizer;
 
@@ -58,10 +60,25 @@ public class ParserTest {
         }
         System.out.println("Parse successful. " + ast.size() + " top-level nodes.");
         
-        for (ParseError error : parser.getErrors()) {
-            System.out.println(error.getMessage());
+        System.out.println("=== SYNTAX ERRORS ===");
+        for (ParseError e : parser.getErrors()) {
+            System.out.println(e.getMessage());
         }
-        
-    }
+
+        // Only run semantic analysis if there are no syntax errors
+        // or run it anyway to collect as many errors as possible
+        SemanticAnalyzer analyzer = new SemanticAnalyzer();
+        analyzer.analyze(ast);
+
+        System.out.println("\n=== SEMANTIC ERRORS ===");
+        for (SemanticError e : analyzer.getErrors()) {
+            System.out.println(e.getMessage());
+        }
+
+        if (parser.getErrors().isEmpty() && analyzer.getErrors().isEmpty()) {
+            System.out.println("\nCompilation successful.");
+        }
+                
+            }
     
 }
