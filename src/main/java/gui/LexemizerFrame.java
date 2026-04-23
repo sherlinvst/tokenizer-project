@@ -108,7 +108,8 @@ public class LexemizerFrame extends JFrame {
             outputPanel.addRow("\n");
 
             for (SemanticError err : analyzer.getErrors()) {
-                outputPanel.addRow(err.getMessage());
+            outputPanel.addRow(err.toCompactString());
+
             }
         }
     }
