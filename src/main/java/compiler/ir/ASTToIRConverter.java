@@ -1,82 +1,67 @@
 package main.java.compiler.ir;
 
 import main.java.compiler.parser.ast.ASTNode;
-import java.lang.reflect.Field;
+import main.java.compiler.parser.expression.*;
+import main.java.compiler.parser.statement.*;
+import main.java.compiler.parser.declaration.*;
+import java.util.List;
 
 public class ASTToIRConverter {
-
     private IRGenerator irGen;
 
     public ASTToIRConverter(IRGenerator irGen) {
         this.irGen = irGen;
     }
 
-    public IRNode convert(ASTNode node) {
+    public void convert(List<ASTNode> nodes) {
+        for (ASTNode node : nodes) convertNode(node);
+    }
+
+    public String convertNode(ASTNode node) {
         if (node == null) return null;
 
-        // Try to safely extract fields via reflection (NO parser changes needed)
-        String operator = getField(node, "operator");
-        Object leftObj = getFieldObject(node, "left");
-        Object rightObj = getFieldObject(node, "right");
-        String value = getField(node, "value");
+        // 1. Terminals (Leaves)
+        if (node instanceof LiteralExp) {
+            return ((LiteralExp) node).value.getLexeme();
+        }
+        if (node instanceof IdentifierExp) {
+            return ((IdentifierExp) node).name.getLexeme();
+        }
 
-        ASTNode left = (leftObj instanceof ASTNode) ? (ASTNode) leftObj : null;
-        ASTNode right = (rightObj instanceof ASTNode) ? (ASTNode) rightObj : null;
+        // 2. Binary Expressions (a + b)
+        if (node instanceof BinaryExp) {
+            BinaryExp bin = (BinaryExp) node;
+            String left = convertNode(bin.left);
+            String right = convertNode(bin.right);
+            String target = irGen.nextTemp();
+            irGen.emit(new IRInstruction(IRInstruction.Type.BINARY_OP, bin.operator.getLexeme(), left, right, target));
+            return target;
+        }
 
-        // CASE 1: Assignment
-        if ("=".equals(operator)) {
-            IRNode rightIR = convert(right);
-
-            if (left != null) {
-                String varName = getField(left, "value");
-                irGen.generateAssignment(varName, rightIR);
+        // 3. Assignments (x = value)
+        if (node instanceof AssignExp) {
+            AssignExp assign = (AssignExp) node;
+            String val = convertNode(assign.value);
+            if (assign.target instanceof IdentifierExp) {
+                String varName = ((IdentifierExp) assign.target).name.getLexeme();
+                irGen.emit(new IRInstruction(IRInstruction.Type.ASSIGN, null, val, varName));
             }
-
             return null;
         }
 
-        // CASE 2: Leaf node
-        if (isLeaf(left, right)) {
-            return new IRNode(value);
+        // 4. Statements
+        if (node instanceof ExprStmt) {
+            convertNode(((ExprStmt) node).exp);
+        } else if (node instanceof VarDecl) {
+            VarDecl decl = (VarDecl) node;
+            if (decl.init != null) {
+                String val = convertNode(decl.init);
+                irGen.emit(new IRInstruction(IRInstruction.Type.ASSIGN, null, val, decl.name.getLexeme()));
+            }
+        } else if (node instanceof BlockStmt) {
+            for (ASTNode s : ((BlockStmt) node).statements) convertNode(s);
         }
 
-        // CASE 3: Unary operation
-        if (right == null && left != null) {
-            IRNode leftIR = convert(left);
-            return new IRNode(operator, leftIR);
-        }
-
-        // CASE 4: Binary operation
-        IRNode leftIR = convert(left);
-        IRNode rightIR = convert(right);
-
-        return new IRNode(operator, leftIR, rightIR);
-    }
-
-    // ---- SAFE HELPERS (no parser editing needed) ----
-
-    private String getField(ASTNode node, String fieldName) {
-        try {
-            Field field = node.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            Object val = field.get(node);
-            return val != null ? val.toString() : null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private Object getFieldObject(ASTNode node, String fieldName) {
-        try {
-            Field field = node.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            return field.get(node);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private boolean isLeaf(ASTNode left, ASTNode right) {
-        return left == null && right == null;
+        return null;
     }
 }

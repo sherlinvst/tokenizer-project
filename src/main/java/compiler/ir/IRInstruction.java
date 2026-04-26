@@ -1,24 +1,14 @@
 package main.java.compiler.ir;
 
 public class IRInstruction {
-
     public enum Type {
-        ASSIGN,
-        BINARY_OP,
-        UNARY_OP,
-        LABEL,
-        JUMP,
-        CONDITIONAL_JUMP
+        ASSIGN, BINARY_OP, UNARY_OP, LABEL, JUMP, CONDITIONAL_JUMP
     }
 
     private Type type;
-    private String op;
-    private String arg1;
-    private String arg2;
-    private String result;
-    private String label;
+    private String op, arg1, arg2, result, label;
 
-    // Constructor for binary operations
+    // Binary Operation: res = arg1 op arg2
     public IRInstruction(Type type, String op, String arg1, String arg2, String result) {
         this.type = type;
         this.op = op;
@@ -27,49 +17,30 @@ public class IRInstruction {
         this.result = result;
     }
 
-    // Constructor for assignment or unary
-    public IRInstruction(Type type, String arg1, String result) {
+    // Assignment / Unary: res = op arg1
+    public IRInstruction(Type type, String op, String arg1, String result) {
         this.type = type;
+        this.op = op;
         this.arg1 = arg1;
         this.result = result;
     }
 
-    // Constructor for label
+    // Labels and Jumps
     public IRInstruction(Type type, String label) {
         this.type = type;
-        this.label = label;
-    }
-
-    // Constructor for jumps
-    public IRInstruction(Type type, String condition, String label, boolean isConditional) {
-        this.type = type;
-        this.arg1 = condition;
         this.label = label;
     }
 
     @Override
     public String toString() {
         switch (type) {
-            case BINARY_OP:
-                return result + " = " + arg1 + " " + op + " " + arg2;
-
-            case UNARY_OP:
-                return result + " = " + op + arg1;
-
-            case ASSIGN:
-                return result + " = " + arg1;
-
-            case LABEL:
-                return label + ":";
-
-            case JUMP:
-                return "GOTO " + label;
-
-            case CONDITIONAL_JUMP:
-                return "IF " + arg1 + " GOTO " + label;
-
-            default:
-                return "UNKNOWN";
+            case BINARY_OP: return result + " = " + arg1 + " " + op + " " + arg2;
+            case ASSIGN:    return result + " = " + arg1;
+            case UNARY_OP:   return result + " = " + op + arg1;
+            case LABEL:     return label + ":";
+            case JUMP:      return "GOTO " + label;
+            case CONDITIONAL_JUMP: return "IF_FALSE " + arg1 + " GOTO " + label;
+            default: return "";
         }
     }
 }
