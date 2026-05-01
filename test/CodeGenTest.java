@@ -5,6 +5,7 @@ import main.java.compiler.parser.Parser;
 import main.java.compiler.parser.ast.ASTNode;
 import main.java.compiler.semantic.SemanticError;
 import main.java.model.Token;
+import main.java.compiler.Interpreter;
 import main.java.tokenizer.Tokenizer;
 
 import java.util.ArrayList;
@@ -56,6 +57,10 @@ public class CodeGenTest {
 
             System.out.println("\n--- GENERATED IR ---");
             codeGen.getIRGenerator().printIR();
+
+            System.out.println("\n--- EXECUTION OUTPUT ---");
+            Interpreter interpreter = new Interpreter();
+            interpreter.interpret(root);
 
             System.out.println("\n--- GENERATED JAVA SOURCE CODE ---");
             System.out.println(javaCode);
