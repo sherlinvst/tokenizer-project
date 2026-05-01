@@ -1,17 +1,18 @@
 package main.java.gui;
 
 import java.awt.*;
-import javax.swing.*;
-
 import java.util.ArrayList;
 import java.util.Arrays;
+import javax.swing.*;
+import main.java.compiler.codegen.CodeGenerator;
+import main.java.compiler.ir.IRInstruction;
+import main.java.compiler.parser.ParseError;
+import main.java.compiler.parser.Parser;
+import main.java.compiler.parser.ast.ASTNode;
+import main.java.compiler.semantic.SemanticError;
 import main.java.gui.popups.*;
 import main.java.tokenizer.Tokenizer;
-import main.java.compiler.parser.Parser;
-import main.java.compiler.parser.ParseError;
-import main.java.compiler.parser.ast.ASTNode;
-import main.java.compiler.semantic.SemanticAnalyzer;
-import main.java.compiler.semantic.SemanticError;
+
 
 public class LexemizerFrame extends JFrame {
 
@@ -77,7 +78,6 @@ public class LexemizerFrame extends JFrame {
 
     public void onGetToken(String sourceCode) {
         tokenizer.emptyTokens();
-
         ArrayList<String> lines = new ArrayList<>(Arrays.asList(sourceCode.split("\n", -1)));
 
         int firstLine = 1;
@@ -93,10 +93,37 @@ public class LexemizerFrame extends JFrame {
 
         Parser parser = new Parser(tokenizer.getTokens());
         ArrayList<ASTNode> ast = parser.parse();
-        SemanticAnalyzer analyzer = new SemanticAnalyzer();
-        analyzer.analyze(ast);
+        /*SemanticAnalyzer analyzer = new SemanticAnalyzer();
+        analyzer.analyze(ast);*/
+        if(!parser.getErrors().isEmpty()) {
+            outputPanel.addRow("=== COMPILATION FAILED ===\n");
+            outputPanel.addRow("=== SYNTAX ERRORS ===\n");
+            for (ParseError err : parser.getErrors()) {
+                outputPanel.addRow(err.getMessage());
+            } return;
+        } 
 
-        if (parser.getErrors().isEmpty() && analyzer.getErrors().isEmpty()) {
+        CodeGenerator generator = new CodeGenerator();
+        String finalJavaCode = generator.generate(ast);
+
+        if (generator.hasSemanticErrors()) {
+            outputPanel.addRow("=== COMPILATION FAILED ===\n");
+            outputPanel.addRow("=== SEMANTIC ERRORS ===\n");
+            for (SemanticError err : generator.getSemanticErrors()) {
+                outputPanel.addRow(err.getMessage());
+            }
+        } else {
+                outputPanel.addRow("=== GENERATED IR ===\n");
+                for (IRInstruction instr : generator.getIRGenerator().getInstructions()) {
+                    outputPanel.addRow(instr.toString());
+                }
+                outputPanel.addRow("\n\n=== GENERATED JAVA CODE ===\n");
+                outputPanel.addRow(finalJavaCode);
+                outputPanel.addRow("\n\n=== COMPILATION SUCCESSFUL ===");
+        }
+    }
+
+        /*if (parser.getErrors().isEmpty() && analyzer.getErrors().isEmpty()) {
             outputPanel.addRow("Compilation successful.");
         } else {
             outputPanel.addRow("Compilation failed.\n");
@@ -111,7 +138,7 @@ public class LexemizerFrame extends JFrame {
                 outputPanel.addRow(err.getMessage());
             }
         }
-    }
+    }*/
 
     public void onClear() {
         outputPanel.clearRows();
