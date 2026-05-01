@@ -24,4 +24,8 @@ public class IRGenerator {
         tempCount = 0;
         labelCount = 0;
     }
+
+    public List<IRInstruction> getInstructions() {
+        return instructions;
+    }
 }

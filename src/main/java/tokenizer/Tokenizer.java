@@ -41,13 +41,16 @@ public class Tokenizer extends TokenRecognizer {
         String trimmed = line.trim();
 
         if (trimmed.startsWith("//")) {
+            tokens.add(new Token(trimmed, "Comment", lineNumber, 1));
             return;
         }
 
         // inline comments
         int commentIndex = line.indexOf("//");
         if (commentIndex != -1) {
+            String commentText = line.substring(commentIndex);
             line = line.substring(0, commentIndex);
+            tokens.add(new Token(commentText, "Comment", lineNumber, commentIndex + 1));
         }
         ArrayList<RawToken> parts = splitLine(line);
 
@@ -212,7 +215,7 @@ public class Tokenizer extends TokenRecognizer {
 
             // Build identifier or number character by character
             // Allow float/double letters (f, F, d, D) at end of numeric token
-            if ((c == 'f' || c == 'F' || c == 'd' || c == 'D')
+            if ((c == 'f' || c == 'F' || c == 'd' || c == 'D' || c == 'l' || c == 'L')
                     && current.length() > 0
                     && isNumeric(current)) {
                 current.append(c);

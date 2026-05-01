@@ -1,11 +1,11 @@
 package main.java.compiler.semantic;
 
+import java.util.ArrayList;
 import main.java.compiler.parser.ast.ASTNode;
 import main.java.compiler.parser.declaration.*;
-import main.java.compiler.parser.statement.*;
-import main.java.compiler.parser.expression.*;
 import main.java.compiler.parser.error.ErrorNode;
-import java.util.ArrayList;
+import main.java.compiler.parser.expression.*;
+import main.java.compiler.parser.statement.*;
 
 public class SemanticAnalyzer {
 
@@ -408,6 +408,9 @@ public class SemanticAnalyzer {
 
     private String analyzeIdentifier(IdentifierExp node) {
         String name = node.name.getLexeme();
+
+        if (isKnownBuiltinClass(name)) return name; //test lang
+
         SymbolTable.Symbol sym = symbolTable.resolve(name);
         if (sym == null) {
             reportError("Undeclared variable '" + name + "'",
@@ -416,6 +419,15 @@ public class SemanticAnalyzer {
         }
         return sym.typeName;
     }
+
+    private boolean isKnownBuiltinClass(String name) {
+    return name.equals("System") || name.equals("Math")   ||
+           name.equals("String") || name.equals("Integer")||
+           name.equals("Double") || name.equals("Boolean")||
+           name.equals("Float")  || name.equals("Long")   ||
+           name.equals("Object") || name.equals("Arrays") ||
+           name.equals("Collections") || name.equals("Scanner");
+    } //test lang 
 
     private String analyzeBinary(BinaryExp node) {
         String left  = analyzeExpr(node.left);
