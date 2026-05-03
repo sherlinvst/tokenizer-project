@@ -98,7 +98,6 @@ public class LexemizerFrame extends JFrame {
         ArrayList<ASTNode> ast = parser.parse();
 
         if(!parser.getErrors().isEmpty()) {
-            outputPanel.addRow("=== COMPILATION FAILED ===\n");
             for (ParseError err : parser.getErrors()) {
                 outputPanel.addRow(err.getMessage());
             } 
@@ -110,7 +109,6 @@ public class LexemizerFrame extends JFrame {
         String finalJavaCode = generator.generate(ast);
 
         if (generator.hasSemanticErrors()) {
-            outputPanel.addRow("=== COMPILATION FAILED ===\n");
             for (SemanticError err : generator.getSemanticErrors()) {
                 outputPanel.addRow(err.getMessage());
             }
@@ -118,8 +116,6 @@ public class LexemizerFrame extends JFrame {
         }
 
         //3. Interpretation
-        outputPanel.addRow("=== PROGRAM OUTPUT ===\n");
-
         PrintStream originalOut = System.out;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintStream captureStream = new PrintStream(baos);
@@ -130,7 +126,6 @@ public class LexemizerFrame extends JFrame {
             interpreter.interpret(ast);
         } catch (RuntimeException e) {
             System.setOut(originalOut);
-            outputPanel.addRow("=== RUNTIME ERROR ===\n");
             outputPanel.addRow(e.getMessage());
             return;
         } finally {
@@ -145,8 +140,8 @@ public class LexemizerFrame extends JFrame {
                 outputPanel.addRow(line);
             }
         }
-        outputPanel.addRow("\n=== COMPILATION SUCCESS ===\n");
     }
+
     public void onClear() {
         outputPanel.clearRows();
         tokenizer.emptyTokens();
