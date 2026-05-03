@@ -23,7 +23,7 @@ public class Parser {
     public ArrayList<ParseError> getErrors() { return errors; }
 
     private void reportError(String message, int line, int col) {
-        errors.add(new ParseError("SYNTAX ERROR: " +message + " at line " + line + ", column " + col, line, col));
+        errors.add(new ParseError("ERROR: " +message + " at line " + line + ", column " + col, line, col));
     }
 
     private static final Token EOF_TOKEN = new Token("EOF", "EOF", -1, -1);

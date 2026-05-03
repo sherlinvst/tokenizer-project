@@ -6,7 +6,7 @@ public class SemanticError {
     private final int col;
 
     public SemanticError(String message, int line, int col) {
-        this.message = "SEMANTIC ERROR: " + message + " at line " + line + ", column " + col;
+        this.message = "ERROR: " + message + " at line " + line + ", column " + col;
         this.line = line;
         this.col  = col;
     }
