@@ -1,11 +1,13 @@
 package main.java.gui;
 
 import java.awt.*;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import javax.swing.*;
+import main.java.compiler.Interpreter;
 import main.java.compiler.codegen.CodeGenerator;
-import main.java.compiler.ir.IRInstruction;
 import main.java.compiler.parser.ParseError;
 import main.java.compiler.parser.Parser;
 import main.java.compiler.parser.ast.ASTNode;
@@ -91,54 +93,54 @@ public class LexemizerFrame extends JFrame {
         tokenizer.tokenizeLines(lines, firstLine);
         outputPanel.clearRows();
 
+        //1. Parse
         Parser parser = new Parser(tokenizer.getTokens());
         ArrayList<ASTNode> ast = parser.parse();
-        /*SemanticAnalyzer analyzer = new SemanticAnalyzer();
-        analyzer.analyze(ast);*/
+
         if(!parser.getErrors().isEmpty()) {
-            outputPanel.addRow("=== COMPILATION FAILED ===\n");
-            outputPanel.addRow("=== SYNTAX ERRORS ===\n");
             for (ParseError err : parser.getErrors()) {
                 outputPanel.addRow(err.getMessage());
-            } return;
+            } 
+            return;
         } 
 
+        //2. Semantic Analysis + Code Generation
         CodeGenerator generator = new CodeGenerator();
         String finalJavaCode = generator.generate(ast);
 
         if (generator.hasSemanticErrors()) {
-            outputPanel.addRow("=== COMPILATION FAILED ===\n");
-            outputPanel.addRow("=== SEMANTIC ERRORS ===\n");
             for (SemanticError err : generator.getSemanticErrors()) {
                 outputPanel.addRow(err.getMessage());
             }
+            return;
+        }
+
+        //3. Interpretation
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream captureStream = new PrintStream(baos);
+
+        try {
+            System.setOut(captureStream);
+            Interpreter interpreter = new Interpreter();
+            interpreter.interpret(ast);
+        } catch (RuntimeException e) {
+            System.setOut(originalOut);
+            outputPanel.addRow(e.getMessage());
+            return;
+        } finally {
+            System.setOut(originalOut);
+        }
+
+        String programOutput = baos.toString();
+        if (programOutput.isEmpty()) {
+            outputPanel.addRow("(no output)");
         } else {
-                outputPanel.addRow("=== GENERATED IR ===\n");
-                for (IRInstruction instr : generator.getIRGenerator().getInstructions()) {
-                    outputPanel.addRow(instr.toString());
-                }
-                outputPanel.addRow("\n\n=== GENERATED JAVA CODE ===\n");
-                outputPanel.addRow(finalJavaCode);
-                outputPanel.addRow("\n\n=== COMPILATION SUCCESSFUL ===");
+            for (String line : programOutput.split("\n", -1)) {
+                outputPanel.addRow(line);
+            }
         }
     }
-
-        /*if (parser.getErrors().isEmpty() && analyzer.getErrors().isEmpty()) {
-            outputPanel.addRow("Compilation successful.");
-        } else {
-            outputPanel.addRow("Compilation failed.\n");
-
-            for (ParseError err : parser.getErrors()) {
-                outputPanel.addRow(err.getMessage());
-            }
-            
-            outputPanel.addRow("\n");
-
-            for (SemanticError err : analyzer.getErrors()) {
-                outputPanel.addRow(err.getMessage());
-            }
-        }
-    }*/
 
     public void onClear() {
         outputPanel.clearRows();

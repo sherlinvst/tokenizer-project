@@ -1,13 +1,13 @@
 package main.java.compiler;
 
-import main.java.compiler.parser.ast.ASTNode;
-import main.java.compiler.parser.declaration.*;
-import main.java.compiler.parser.expression.*;
-import main.java.compiler.parser.statement.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import main.java.compiler.parser.ast.ASTNode;
+import main.java.compiler.parser.declaration.*;
+import main.java.compiler.parser.expression.*;
+import main.java.compiler.parser.statement.*;
 
 /**
  * Interpreter — AST Walker
@@ -100,6 +100,9 @@ public class Interpreter {
                 case "/": return (Integer) left / (Integer) right;
                 case ">": return (Integer) left > (Integer) right;
                 case "<": return (Integer) left < (Integer) right;
+                case ">=": return (Integer) left >= (Integer) right;
+                case "<=": return (Integer) left <= (Integer) right;
+                case "!=": return !left.equals(right);
                 case "==": return left.equals(right);
             }
         }
