@@ -866,7 +866,25 @@ public class Parser {
             t.getTokenType().equals("Char Literal")    ||
             t.getTokenType().equals("Boolean Literal") ||
             t.getTokenType().equals("Special Literal")) {
-            return new LiteralExp(next());
+
+                Token literalToken = next();
+
+                if (literalToken.getTokenType().equals("Char Literal")) {
+                    String raw = literalToken.getLexeme(); // example: 'i'
+
+                    if (raw.length() >= 2) {
+                        String value = raw.substring(1, raw.length() - 1); // i
+
+                        literalToken = new Token(
+                            value,
+                            literalToken.getTokenType(),
+                            literalToken.getLineNumber(),
+                            literalToken.getColumnNumber()
+                        );
+                    }
+                }
+
+            return new LiteralExp(literalToken);
         }
 
         if (checkLexeme("{")) return arrInitExp();
