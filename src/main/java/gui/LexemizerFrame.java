@@ -100,6 +100,7 @@ public class LexemizerFrame extends JFrame {
         if(!parser.getErrors().isEmpty()) {
             for (ParseError err : parser.getErrors()) {
                 outputPanel.addRow(err.getMessage());
+                System.out.println(err.getMessage());
             } 
             return;
         } 
@@ -111,6 +112,7 @@ public class LexemizerFrame extends JFrame {
         if (generator.hasSemanticErrors()) {
             for (SemanticError err : generator.getSemanticErrors()) {
                 outputPanel.addRow(err.getMessage());
+                System.out.println(err.getMessage());
             }
             return;
         }
@@ -126,7 +128,7 @@ public class LexemizerFrame extends JFrame {
             interpreter.interpret(ast);
         } catch (RuntimeException e) {
             System.setOut(originalOut);
-            outputPanel.addRow(e.getMessage());
+            outputPanel.addRow("ERROR: " +e.getMessage());
             return;
         } finally {
             System.setOut(originalOut);

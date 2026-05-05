@@ -1,70 +1,3 @@
-Example 1:
-String name = "John Doe";
-
-String - data-type-keyword
-name - identifier
-= - assignment-operator
-"John Doe" - string-literal
-
-Example 2:
-while (true) {
-   String var = "Hello world";
-   break;
-}
-
-while - keyword
-( - parenthesis
-true - boolean-literal
-) - parenthesis
-{ - bracket
-String - data-type-keyword
-var - identifier
-= - assignment-operator
-"Hello world" - string-literal
-; - semicolon
-break - keyword
-} - bracket
-
-Example 3:
-int `
-
-int - data-type-keyword
-` - invalid input (doesn't match any token type or identifier pattern)
-
-Example 4:
-public class HelloWorld {
-    public static void main(String[] args) {
-        System.out.println("Hello, World!");
-    }
-}
-
-public          - access-control-keyword
-class           - object-oriented-keyword
-HelloWorld      - identifier
-{               - bracket
-public          - access-control-keyword
-static          - object-oriented-keyword
-void            - data-type-keyword
-main            - identifier
-(               - parenthesis
-String          - data-type-keyword
-[               - bracket
-]               - bracket
-args            - identifier
-)               - parenthesis
-{               - bracket
-System          - identifier
-.               - period
-out             - identifier
-.               - period
-println         - identifier
-(               - parenthesis
-"Hello, World!" - string-literal
-)               - parenthesis
-;               - semicolon
-}               - bracket
-}               - bracket
-
 public class Test {
     public static void main(String[] args) {
         int x = 10;
@@ -85,24 +18,61 @@ public class LexTest {
 
 public class LexTest{
 	public static void main(String[] args){
-	char gh = 'g';
+	System.out.println(10+10);
 	}
 }
 
 public class Demo {
 public static void main(String[] args) {
 
-    int a = 123;
-    long b = 100L;
-    double c = 3.14;
-    double d = 1e-10;
-
-    char ch = '\n';
-    String s = "hello";
-
     int invalid1 = 0b102;
     char invalid2 = 'ab';
     double invalid3 = 3.14.15;
 
 }
+}
+
+public class Test1 {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}
+
+public class Test2 {
+    public static void main(String[] args) {
+        int a = 5;
+        int b = 10;
+        int sum = a + b;
+        int product = a * b;
+
+        System.out.println("Sum: " + sum);
+        System.out.println("Product: " + product);
+    }
+}
+
+public class Test3 {
+    public static void main(String[] args) {
+        boolean x = true;
+
+        if (x) {
+            System.out.println("True");
+        } else {
+            System.out.println("False");
+        }
+    }
+}
+
+public class Test4 {
+    public static void main(String[] args) {
+        for (int i = 0; i < 5; i++) {
+            System.out.println("i = " + i);
+        }
+    }
+}
+
+public class TestError {
+    public static void main(String[] args) {
+        int x = "hello";
+        System.out.println(x);
+    }
 }

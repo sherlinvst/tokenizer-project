@@ -334,45 +334,74 @@ public class Parser {
     }
 
     private ASTNode classDecl(ArrayList<Token> modifiers) {
-        expectedLexeme("class");
-        Token name = expectedToken("Identifier", "Expected class name");
+      expectedLexeme("class");
+      Token name = expectedToken("Identifier", "Expected class name");
 
-        TypeNode superClass = null;
-        if (matchLexeme("extends")) superClass = baseType();
+      TypeNode superClass = null;
+      if (matchLexeme("extends")) superClass = baseType();
 
-        ArrayList<TypeNode> interfaces = new ArrayList<>();
-        if (matchLexeme("implements")) {
-            do { interfaces.add(baseType()); } while (matchLexeme(","));
-        }
+      ArrayList<TypeNode> interfaces = new ArrayList<>();
+      if (matchLexeme("implements")) {
+          do { interfaces.add(baseType()); } while (matchLexeme(","));
+      }
 
-        expectedLexeme("{");
+      // Track where '{' opened for the error message
+      int openLine = peek().getLineNumber();
+      int openCol  = peek().getColumnNumber();
+      expectedLexeme("{");
 
-        ParseContext saved = context; // save whatever context we came from
-        context = ParseContext.CLASS_BODY;
+      ParseContext saved = context;
+      context = ParseContext.CLASS_BODY;
 
-        ArrayList<ASTNode> members = new ArrayList<>();
-        while (!checkLexeme("}") && !isEnd()) {
-            try {
-                int errorsBefore = errors.size();
-                ASTNode member = declOrStmt();
-                // only add if it parsed cleanly AND is not an ErrorNode
-                if (!(member instanceof ErrorNode) && errors.size() == errorsBefore) {
-                    members.add(member);
-                } else if (!(member instanceof ErrorNode) && errors.size() > errorsBefore) {
-                    // parsed with errors — still add so downstream analysis can try
-                    // but flag it so semantic analyzer knows it may be incomplete
-                    members.add(member);
-                }
-            } catch (ParseError e) {
-                errors.add(e);
-                recoverClassMember();
-            }
-        }
+      ArrayList<ASTNode> members = new ArrayList<>();
+      while (!checkLexeme("}") && !isEnd()) {
+          try {
+              ASTNode member = declOrStmt();
+              if (!(member instanceof ErrorNode)) {
+                  members.add(member);
+              }
+          } catch (ParseError e) {
+              errors.add(e);
+              recoverClassMember();
+          }
+      }
 
-        context = saved; // restore — not hardcoded TOP_LEVEL
-        expectedLexeme("}");
-        return new ClassDecl(modifiers, name, superClass, interfaces, members);
-    }
+      context = saved;
+
+      // FIXED — explicit check instead of expectedLexeme
+      if (isEnd()) {
+          reportUnclosedBlock("class '" + name.getLexeme() + "'", openLine, openCol);
+          // do NOT consume EOF
+      } else {
+          next(); // consume '}'
+      }
+
+      return new ClassDecl(modifiers, name, superClass, interfaces, members);
+  }
+
+  // Add this helper for any expected closing delimiter
+  private void expectClosingDelimiter(String delimiter, String context, int openLine, int openCol) {
+      if (isEnd()) {
+          reportError("Unclosed " + context +
+                      " — missing '" + delimiter + "' (opened at line " +
+                      openLine + ", column " + openCol + ")",
+                      openLine, openCol);
+          return; // do NOT consume
+      }
+      if (!checkLexeme(delimiter)) {
+          reportError("Expected '" + delimiter + "', got '" + peek().getLexeme() + "'",
+                      peek().getLineNumber(), peek().getColumnNumber());
+          // skip to delimiter or a safe boundary
+          while (!isEnd() && !checkLexeme(delimiter) &&
+                !checkLexeme(";") && !checkLexeme("}")) {
+              next();
+          }
+          matchLexeme(delimiter); // consume if found
+          return;
+      }
+      next(); // consume delimiter normally
+  }
+
     // for statements
     private ASTNode stmt() {
         try {
@@ -435,53 +464,79 @@ public class Parser {
     }
 
     private BlockStmt block() {
-        int line = peek().getLineNumber(), col = peek().getColumnNumber();
-        expectedLexeme("{");
-        ArrayList<ASTNode> stmts = new ArrayList<>();
-        while (!checkLexeme("}") && !isEnd()) {
-            try {
-                ASTNode node = declOrStmt();
-                // ErrorNode already had its error recorded — just skip adding to tree
-                if (!(node instanceof ErrorNode)) {
-                    stmts.add(node);
-                }
-            } catch (ParseError e) {
-                errors.add(e);
-                recover();
-            }
-        }
-        expectedLexeme("}");
-        return new BlockStmt(stmts, line, col);
+      int line = peek().getLineNumber();
+      int col  = peek().getColumnNumber();
+      expectedLexeme("{");
+
+      ArrayList<ASTNode> stmts = new ArrayList<>();
+      while (!checkLexeme("}") && !isEnd()) {
+          try {
+              ASTNode node = declOrStmt();
+              if (!(node instanceof ErrorNode)) {
+                  stmts.add(node);
+              }
+          } catch (ParseError e) {
+              errors.add(e);
+              recover();
+          }
+      }
+
+      // FIXED — check explicitly instead of using expectedLexeme
+      if (isEnd()) {
+          reportUnclosedBlock("block", line, col);
+          // do NOT consume — leave EOF for the caller to see
+      } else {
+          next(); // consume the '}'
+      }
+
+      return new BlockStmt(stmts, line, col);
+  }
+
+    // Reports a missing '}' at the position where the block OPENED
+    // Does not consume any token — leaves the stream intact for the caller
+    private void reportUnclosedBlock(String blockType, int openLine, int openCol) {
+        reportError("Unclosed " + blockType +
+                    " — missing '}' (opened at line " + openLine +
+                    ", column " + openCol + ")",
+                    openLine, openCol);
     }
 
     private IfStmt ifStmt() {
-        int line = peek().getLineNumber();
-        int col = peek().getColumnNumber();
-        expectedLexeme("if");
-        expectedLexeme("(");
+      int line = peek().getLineNumber();
+      int col  = peek().getColumnNumber();
+      expectedLexeme("if");
 
-        ASTNode condition = expression();
-        expectedLexeme(")");
+      int parenLine = peek().getLineNumber();
+      int parenCol  = peek().getColumnNumber();
+      expectedLexeme("(");
 
-        ASTNode thenBranch = stmt();
-        ASTNode elseBranch = null;
-        if (checkLexeme("else")) {
-            next();
-            elseBranch = stmt();
-        }
-        return new IfStmt(condition, thenBranch, elseBranch, line, col);
-    }
+      ASTNode condition = expression();
+      expectClosingDelimiter(")", "if condition", parenLine, parenCol); // FIXED
+
+      ASTNode thenBranch = stmt();
+      ASTNode elseBranch = null;
+      if (checkLexeme("else")) {
+          next();
+          elseBranch = stmt();
+      }
+      return new IfStmt(condition, thenBranch, elseBranch, line, col);
+  }
 
     private WhileStmt whileStmt() {
-        int line = peek().getLineNumber();
-        int col = peek().getColumnNumber();
-        expectedLexeme("while");
-        expectedLexeme("(");
-        ASTNode condition = expression();
-        expectedLexeme(")");
-        ASTNode body = stmt();
-        return new WhileStmt(condition, body, line, col);
-    }
+      int line = peek().getLineNumber();
+      int col  = peek().getColumnNumber();
+      expectedLexeme("while");
+
+      int parenLine = peek().getLineNumber();
+      int parenCol  = peek().getColumnNumber();
+      expectedLexeme("(");
+
+      ASTNode condition = expression();
+      expectClosingDelimiter(")", "while condition", parenLine, parenCol); // FIXED
+
+      ASTNode body = stmt();
+      return new WhileStmt(condition, body, line, col);
+  }
 
     private ForStmt forStmt() {
         int line = peek().getLineNumber();
