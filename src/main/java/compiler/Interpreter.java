@@ -98,6 +98,7 @@ public class Interpreter {
                 case "-": return (Integer) left - (Integer) right;
                 case "*": return (Integer) left * (Integer) right;
                 case "/": return (Integer) left / (Integer) right;
+                case "%":  return (Integer) left % (Integer) right;
                 case ">": return (Integer) left > (Integer) right;
                 case "<": return (Integer) left < (Integer) right;
                 case ">=": return (Integer) left >= (Integer) right;

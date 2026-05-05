@@ -41,16 +41,13 @@ public class Tokenizer extends TokenRecognizer {
         String trimmed = line.trim();
 
         if (trimmed.startsWith("//")) {
-            tokens.add(new Token(trimmed, "Comment", lineNumber, 1));
-            return;
+            return; // do not add comment as token
         }
 
         // inline comments
         int commentIndex = line.indexOf("//");
         if (commentIndex != -1) {
-            String commentText = line.substring(commentIndex);
-            line = line.substring(0, commentIndex);
-            tokens.add(new Token(commentText, "Comment", lineNumber, commentIndex + 1));
+            line = line.substring(0, commentIndex); // keep only code before //
         }
         ArrayList<RawToken> parts = splitLine(line);
 

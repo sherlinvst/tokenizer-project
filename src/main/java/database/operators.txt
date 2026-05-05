@@ -8,7 +8,7 @@
 /=,assignment-operator
 %=,assignment-operator
 *=,assignment-operator
-%,mathematical-operator
+%,arithmetic-operator
 &&,logical-operator
 ||,logical-operator
 !,logical-operator
