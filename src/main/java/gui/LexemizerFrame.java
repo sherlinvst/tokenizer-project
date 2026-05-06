@@ -31,7 +31,7 @@ public class LexemizerFrame extends JFrame {
     public static final Color FG_DIM    = new Color(0x7A70A0);
 
     public LexemizerFrame() {
-        super("Lexemizer");
+        super("Compiler");
         this.tokenizer = new Tokenizer();
         initWindow();
         init();
@@ -112,7 +112,6 @@ public class LexemizerFrame extends JFrame {
         if (generator.hasSemanticErrors()) {
             for (SemanticError err : generator.getSemanticErrors()) {
                 outputPanel.addRow(err.getMessage());
-                System.out.println(err.getMessage());
             }
             return;
         }

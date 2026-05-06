@@ -77,6 +77,18 @@ public class TestError {
     }
 }
 
+public class TestError {
+    public static void main(String[] args) {
+        String 8shg = "hello";
+    }
+}
+
+public class TestError {
+    public static void main(String[] args) {
+        private String x = "hello";
+    }
+}
+
 public class Main {
     public static void main(String[] args) {
         int number = 7;
