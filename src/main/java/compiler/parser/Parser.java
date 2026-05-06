@@ -45,18 +45,16 @@ public class Parser {
     }
 
     private boolean checkToken(String tokenType) {
-        // check if current token matches expected type
         return peek().getTokenType().equals(tokenType);
     }
 
     private boolean checkLexeme(String lexeme) {
-        // check if current lexeme matches for keyword or operator
         return peek().getLexeme().equals(lexeme);
     }
 
     private Token expectedToken(String tokenType, String errorMessage) {
         if (!checkToken(tokenType)) {
-            if (isEnd()) return EOF_TOKEN; // add this guard
+            if (isEnd()) return EOF_TOKEN; 
             reportError(errorMessage + ", got '" + peek().getLexeme() + "'",
                         peek().getLineNumber(), peek().getColumnNumber());
             next();
@@ -80,7 +78,6 @@ public class Parser {
     }
 
     private boolean matchLexeme (String lexeme) {
-        // check if matches then consume and return true, else return false
         if (checkLexeme(lexeme)) {
             next();
             return true;
@@ -89,19 +86,15 @@ public class Parser {
     }
 
     private boolean isEnd(){
-        // check if reached end of tokens
         return peek().getTokenType().equals("EOF");
     }
 
-    // checks if the next thing is a declaration or a plain statement
     private ASTNode declOrStmt() {
         ArrayList<Token> modifiers = new ArrayList<>();
         while (isAccessModifier(peek())) {
             modifiers.add(next());
         }
 
-        // Detect typo-ed modifier: lowercase identifier followed by 'class' or a type+identifier
-        // e.g. "pubic class Foo" or "pubic int x"
         if (modifiers.isEmpty() && isIdentifier(peek()) && !isEnd()) {
             Token suspect = peek();
             Token after   = checkNext();
@@ -113,8 +106,7 @@ public class Parser {
             if (looksLikeModifier) {
                 reportError("Unknown modifier '" + suspect.getLexeme() + "'",
                             suspect.getLineNumber(), suspect.getColumnNumber());
-                next(); // consume the bad modifier and continue
-                // retry modifiers in case more follow
+                next();
                 while (isAccessModifier(peek())) modifiers.add(next());
             }
         }
@@ -143,7 +135,7 @@ public class Parser {
     }
 
     private ConstructorDecl constructorDecl(ArrayList<Token> modifiers) {
-        Token name = next(); // consume class name
+        Token name = next();
         expectedLexeme("(");
 
         ArrayList<VarDecl> params = new ArrayList<>();
@@ -174,11 +166,10 @@ public class Parser {
     }
 
     private void recover() {
-        // Do NOT consume if already at a safe boundary
         while (!isEnd()) {
             String lex = peek().getLexeme();
-            if (lex.equals(";"))  { next(); return; } // consume semicolon, stop
-            if (lex.equals("}") || lex.equals("{"))   return; // stop, do not consume
+            if (lex.equals(";"))  { next(); return; }
+            if (lex.equals("}") || lex.equals("{"))   return;
             if (isStatementStarter() || isAccessModifier(peek())) return;
             next();
         }
@@ -223,15 +214,13 @@ public class Parser {
               lex.equals("*=") || lex.equals("/=") || lex.equals("%=");
     }
 
-    // check type of token
     private boolean isTypeToken(Token token) {
         String lexeme = token.getLexeme();
         return lexeme.equals("int")    || lexeme.equals("float")   || lexeme.equals("double") ||
               lexeme.equals("boolean")|| lexeme.equals("char")    || lexeme.equals("String") ||
-              lexeme.equals("void")   || token.getTokenType().equals("Identifier"); // for user defined
+              lexeme.equals("void")   || token.getTokenType().equals("Identifier");
     }
 
-    // check if identifier
     private boolean isIdentifier(Token token) {
         return token.getTokenType().equals("Identifier");
     }
@@ -255,11 +244,9 @@ public class Parser {
               lex.equals("--") || lex.equals("new");
     }
 
-    // check if variable or method declaration
     private ASTNode varOrMethodDecl(ArrayList<Token> modifiers) {
         TypeNode type = type();
 
-        // validate name is actually an identifier
         if (!isIdentifier(peek())) {
             reportError("Expected variable or method name after type '" + type.baseName + "', got '" + peek().getLexeme() + "'",
                         peek().getLineNumber(), peek().getColumnNumber());
@@ -304,7 +291,6 @@ public class Parser {
             do {
                 TypeNode paramType = type();
 
-                // validate param name
                 if (!isIdentifier(peek())) {
                     reportError("Expected parameter name, got '" + peek().getLexeme() + "'",
                                 peek().getLineNumber(), peek().getColumnNumber());
@@ -314,7 +300,7 @@ public class Parser {
 
                 Token paramName = next();
                 params.add(new VarDecl(new ArrayList<>(), paramType, paramName, null));
-            } while (matchLexeme(","));      // changed from while(true)+break to do-while
+            } while (matchLexeme(","));
         }
 
         expectedLexeme(")");
@@ -345,7 +331,6 @@ public class Parser {
           do { interfaces.add(baseType()); } while (matchLexeme(","));
       }
 
-      // Track where '{' opened for the error message
       int openLine = peek().getLineNumber();
       int openCol  = peek().getColumnNumber();
       expectedLexeme("{");
@@ -368,41 +353,36 @@ public class Parser {
 
       context = saved;
 
-      // FIXED — explicit check instead of expectedLexeme
       if (isEnd()) {
           reportUnclosedBlock("class '" + name.getLexeme() + "'", openLine, openCol);
-          // do NOT consume EOF
       } else {
-          next(); // consume '}'
+          next();
       }
 
       return new ClassDecl(modifiers, name, superClass, interfaces, members);
   }
 
-  // Add this helper for any expected closing delimiter
   private void expectClosingDelimiter(String delimiter, String context, int openLine, int openCol) {
       if (isEnd()) {
           reportError("Unclosed " + context +
                       " — missing '" + delimiter + "' (opened at line " +
                       openLine + ", column " + openCol + ")",
                       openLine, openCol);
-          return; // do NOT consume
+          return;
       }
       if (!checkLexeme(delimiter)) {
           reportError("Expected '" + delimiter + "', got '" + peek().getLexeme() + "'",
                       peek().getLineNumber(), peek().getColumnNumber());
-          // skip to delimiter or a safe boundary
           while (!isEnd() && !checkLexeme(delimiter) &&
                 !checkLexeme(";") && !checkLexeme("}")) {
               next();
           }
-          matchLexeme(delimiter); // consume if found
+          matchLexeme(delimiter);
           return;
       }
-      next(); // consume delimiter normally
+      next();
   }
 
-    // for statements
     private ASTNode stmt() {
         try {
             if (checkLexeme("{"))        return block();
@@ -481,19 +461,15 @@ public class Parser {
           }
       }
 
-      // FIXED — check explicitly instead of using expectedLexeme
       if (isEnd()) {
           reportUnclosedBlock("block", line, col);
-          // do NOT consume — leave EOF for the caller to see
       } else {
-          next(); // consume the '}'
+          next();
       }
 
       return new BlockStmt(stmts, line, col);
   }
 
-    // Reports a missing '}' at the position where the block OPENED
-    // Does not consume any token — leaves the stream intact for the caller
     private void reportUnclosedBlock(String blockType, int openLine, int openCol) {
         reportError("Unclosed " + blockType +
                     " — missing '}' (opened at line " + openLine +
@@ -511,7 +487,7 @@ public class Parser {
       expectedLexeme("(");
 
       ASTNode condition = expression();
-      expectClosingDelimiter(")", "if condition", parenLine, parenCol); // FIXED
+      expectClosingDelimiter(")", "if condition", parenLine, parenCol);
 
       ASTNode thenBranch = stmt();
       ASTNode elseBranch = null;
@@ -532,7 +508,7 @@ public class Parser {
       expectedLexeme("(");
 
       ASTNode condition = expression();
-      expectClosingDelimiter(")", "while condition", parenLine, parenCol); // FIXED
+      expectClosingDelimiter(")", "while condition", parenLine, parenCol);
 
       ASTNode body = stmt();
       return new WhileStmt(condition, body, line, col);
@@ -571,7 +547,7 @@ public class Parser {
                 }
 
                 expectedLexeme(";");
-                init = new VarDecl(modifiers, varType, varName, varInit); // always assign — no if condition here
+                init = new VarDecl(modifiers, varType, varName, varInit);
 
             } else {
                 if (!modifiers.isEmpty()) {
@@ -582,10 +558,9 @@ public class Parser {
                 expectedLexeme(";");
             }
         } else {
-            next(); // consume ';'
+            next();
         }
 
-        // condition
         ASTNode condition = null;
         if (!checkLexeme(";")) {
             try {
@@ -601,10 +576,9 @@ public class Parser {
                         peek().getLineNumber(), peek().getColumnNumber());
             while (!isEnd() && !checkLexeme(")") && !checkLexeme("{")) next();
         } else {
-            next(); // consume ';'
+            next();
         }
 
-        // update
         ASTNode update = null;
         if (!checkLexeme(")")) {
             try {
@@ -630,11 +604,10 @@ public class Parser {
         return new ReturnStmt(value, line, col);
     }
 
-    // expression chain
     private ASTNode expression() {
         try {
             return assignment();
-        } catch (ParseError e) { // only catch known parse errors, not all exceptions
+        } catch (ParseError e) {
             errors.add(e);
             recoverExpression();
             return new ErrorNode(peek().getLineNumber(), peek().getColumnNumber());
@@ -647,14 +620,13 @@ public class Parser {
         ArrayList<ASTNode> elements = new ArrayList<>();
         if (!checkLexeme("}")) {
             do {
-                // nested initializer for multi-dim arrays
                 if (checkLexeme("{")) {
                     elements.add(arrInitExp());
                 } else {
                     elements.add(expression());
                 }
             } while (matchLexeme(","));
-            matchLexeme(","); // trailing comma allowed
+            matchLexeme(",");
         }
         expectedLexeme("}");
         return new ArrInitExp(elements, line, col);
@@ -672,7 +644,7 @@ public class Parser {
             }
 
             if (op.getLexeme().equals("=")) {
-                return new AssignExp(left, value);  // store the whole lvalue, not just name
+                return new AssignExp(left, value);
             }
             return new CompoundAssignExp(left, op, value);
         }
@@ -700,7 +672,7 @@ public class Parser {
 
     private ASTNode bitwiseOrExpr() {
         ASTNode left = bitwiseXorExpr();
-        while (checkLexeme("|")) { // tokenizer makes || a separate token, so this is safe
+        while (checkLexeme("|")) {
             Token op = next();
             left = new BinaryExp(op, left, bitwiseXorExpr());
         }
@@ -709,7 +681,7 @@ public class Parser {
 
     private ASTNode bitwiseAndExpr() {
         ASTNode left = equality();
-        while (checkLexeme("&")) { // same — && is a separate token
+        while (checkLexeme("&")) {
             Token op = next();
             left = new BinaryExp(op, left, equality());
         }
@@ -726,7 +698,7 @@ public class Parser {
     }
 
     private ASTNode ternary() {
-        ASTNode condition = orExpr(); // correct
+        ASTNode condition = orExpr();
         if (checkLexeme("?")) {
             ASTNode thenBranch = expression();
             expectedLexeme(":");
@@ -773,7 +745,6 @@ public class Parser {
     }
 
     private ASTNode unary() {
-        // increment and decrement
         if (checkLexeme("++") || checkLexeme("--")) {
             Token op = next();
             ASTNode operand = unary();
@@ -781,12 +752,11 @@ public class Parser {
         }
         if (checkLexeme("!") || checkLexeme("-")) {
             Token op = next();
-            return new UnaryExp(op, unary()); // right recursive
+            return new UnaryExp(op, unary());
         }
         return postFix();
     }
 
-    // method call and member access
     private ASTNode postFix() {
         ASTNode expr = primary();
 
@@ -835,11 +805,9 @@ public class Parser {
     private TypeNode type() {
         TypeNode base = baseType();
         int dims = 0;
-        // current is now pointing at whatever follows the base type
-        // for "int[] arr", current points at '[', current+1 points at ']'
         while (checkLexeme("[") && tokenAt(1, "]")) {
-            next(); // consume '['
-            next(); // consume ']'
+            next();
+            next();
             dims++;
         }
         if (dims == 0) return base;
@@ -858,25 +826,22 @@ public class Parser {
                                 t.getLineNumber(), t.getColumnNumber());
         }
 
-        next(); // consume base type name
+        next();
         StringBuilder name = new StringBuilder(t.getLexeme());
 
-        // qualified name: java.util.List
         while (checkLexeme(".") && checkNext().getTokenType().equals("Identifier")) {
             next();
             name.append(".").append(next().getLexeme());
         }
 
-        // generic type arguments: <String, Integer>
         ArrayList<TypeNode> typeArgs = new ArrayList<>();
         if (checkLexeme("<")) {
-            next(); // consume '<'
+            next();
             if (!checkLexeme(">")) {
                 do {
                     if (checkLexeme("?")) {
-                        // wildcard: ?, ? extends T, ? super T
                         int wLine = peek().getLineNumber(), wCol = peek().getColumnNumber();
-                        next(); // consume '?'
+                        next();
                         if (checkLexeme("extends") || checkLexeme("super")) {
                             String bound = next().getLexeme();
                             TypeNode boundType = baseType();
@@ -886,12 +851,11 @@ public class Parser {
                             typeArgs.add(new TypeNode("?", new ArrayList<>(), 0, wLine, wCol));
                         }
                     } else {
-                        typeArgs.add(type()); // recursive for nested generics
+                        typeArgs.add(type());
                     }
                 } while (matchLexeme(","));
             }
 
-            // handle ">>" split for nested generics like Map<String, List<Integer>>
             if (checkLexeme(">>")) {
                 Token gt = tokens.get(current);
                 tokens.set(current,
@@ -905,13 +869,11 @@ public class Parser {
         return new TypeNode(name.toString(), typeArgs, 0, line, col);
     }
 
-    // when called from type(), current is pointing at '[', so current+1 is ']'
     private boolean tokenAt(int offset, String lexeme) {
         int idx = current + offset;
         return idx < tokens.size() && tokens.get(idx).getLexeme().equals(lexeme);
     }
 
-    // bottom of chain
     private ASTNode primary() {
         Token t = peek();
 
@@ -925,10 +887,10 @@ public class Parser {
                 Token literalToken = next();
 
                 if (literalToken.getTokenType().equals("Char Literal")) {
-                    String raw = literalToken.getLexeme(); // example: 'i'
+                    String raw = literalToken.getLexeme();
 
                     if (raw.length() >= 2) {
-                        String value = raw.substring(1, raw.length() - 1); // i
+                        String value = raw.substring(1, raw.length() - 1);
 
                         literalToken = new Token(
                             value,
@@ -952,8 +914,8 @@ public class Parser {
                 next();
 
                 if (checkLexeme("]")) {
-                    next(); // consume ']'
-                    return new NewArrExp(type, arrInitExp(), null); // delegate
+                    next();
+                    return new NewArrExp(type, arrInitExp(), null);
                 } else {
                     ASTNode size = expression();
                     expectedLexeme("]");
@@ -973,14 +935,11 @@ public class Parser {
             return new IdentifierExp(next());
         }
 
-        // -------------------------
-        // GROUPING OR CAST
-        // -------------------------
         if (checkLexeme("(")) {
             int saved = current;
             int parenLine = peek().getLineNumber();
             int parenCol  = peek().getColumnNumber();
-            next(); // consume '('
+            next();
 
             if (isTypeToken(peek())) {
                 try {
@@ -994,26 +953,23 @@ public class Parser {
                 } catch (ParseError ignored) {}
             }
 
-            // Backtrack and parse as grouped expression
             current = saved;
-            next(); // consume '(' again
+            next();
 
             ASTNode inner = expression();
 
-            // If ')' is missing, report once and do NOT cascade
             if (!checkLexeme(")")) {
                 reportError("Unclosed '(' — expected ')', got '" + peek().getLexeme() + "'",
-                            parenLine, parenCol); // report at the OPENING paren position
-                // skip to a safe recovery point without consuming block tokens
+                            parenLine, parenCol);
                 while (!isEnd() && !checkLexeme(")") &&
                       !checkLexeme(";") && !checkLexeme("}")) {
                     next();
                 }
-                matchLexeme(")"); // consume ')' if we found one
-                return inner;     // return what we have
+                matchLexeme(")");
+                return inner;
             }
 
-            next(); // consume ')'
+            next();
             return inner;
         }
 

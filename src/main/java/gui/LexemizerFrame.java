@@ -100,7 +100,6 @@ public class LexemizerFrame extends JFrame {
         if(!parser.getErrors().isEmpty()) {
             for (ParseError err : parser.getErrors()) {
                 outputPanel.addRow(err.getMessage());
-                System.out.println(err.getMessage());
             } 
             return;
         } 

@@ -19,9 +19,7 @@ public class SemanticAnalyzer {
         errors.add(new SemanticError(message, line, col));
     }
 
-    // Entry point — call this with the list returned by parser.parse()
     public void analyze(ArrayList<ASTNode> nodes) {
-        // Global scope — holds class names
         symbolTable.enterScope();
         for (ASTNode node : nodes) {
             analyze(node);
@@ -29,7 +27,6 @@ public class SemanticAnalyzer {
         symbolTable.exitScope();
     }
 
-    // Central dispatcher — routes each node to the right handler
     private void analyze(ASTNode node) {
         if (node == null || node instanceof ErrorNode) return;
 
@@ -47,7 +44,6 @@ public class SemanticAnalyzer {
         else if (node instanceof ContinueStmt) { /* same */ }
         else if (node instanceof DoWhileStmt) analyzeDoWhile((DoWhileStmt) node);
         else if (node instanceof ThrowStmt)  analyzeThrow((ThrowStmt) node);
-        // expressions used as statements
         else analyzeExpr(node);
     }
     
@@ -74,19 +70,17 @@ public class SemanticAnalyzer {
         String previousClass = symbolTable.getCurrentClassName();
         symbolTable.setCurrentClassName(node.name.getLexeme());
 
-        // First pass — register names so bodies can reference anything in the class
         for (ASTNode member : node.members) {
             if (member instanceof VarDecl)             registerField((VarDecl) member);
             else if (member instanceof MethodDecl)     registerMethod((MethodDecl) member);
             else if (member instanceof ConstructorDecl) registerConstructor((ConstructorDecl) member);
         }
 
-        // Second pass — analyze bodies WITHOUT re-declaring fields
         for (ASTNode member : node.members) {
             if (member instanceof VarDecl) {
-                analyzeFieldInitializerOnly((VarDecl) member); // NEW — skip re-declaration
+                analyzeFieldInitializerOnly((VarDecl) member); 
             } else {
-                analyze(member); // methods and constructors go through normal path
+                analyze(member); 
             }
         }
 
@@ -94,7 +88,6 @@ public class SemanticAnalyzer {
         symbolTable.exitScope();
     }
 
-    // Only type-checks the initializer — does NOT declare into symbol table
     private void analyzeFieldInitializerOnly(VarDecl node) {
         if (node.init == null) return;
 
@@ -110,7 +103,6 @@ public class SemanticAnalyzer {
         }
     }
 
-    // Register field without analyzing initializer yet
     private void registerField(VarDecl node) {
         SymbolTable.Symbol sym = new SymbolTable.Symbol(
             node.name.getLexeme(), "variable",
@@ -125,9 +117,7 @@ public class SemanticAnalyzer {
         }
     }
 
-    // Register method signature only — body analyzed separately
     private void registerMethod(MethodDecl node) {
-        // FIX: was node.type — should be node.returnType
         String returnTypeName = node.type != null ? node.type.baseName : "void";
 
         SymbolTable.Symbol sym = new SymbolTable.Symbol(
@@ -145,14 +135,13 @@ public class SemanticAnalyzer {
     private void registerConstructor(ConstructorDecl node) {
         SymbolTable.Symbol sym = new SymbolTable.Symbol(
             node.name.getLexeme(), "constructor",
-            node.name.getLexeme(), // return type is the class itself
+            node.name.getLexeme(),
             0,
             node.name.getLineNumber(), node.name.getColumnNumber());
-        symbolTable.declare(sym); // duplicate constructors only matter if params are identical — skip for mini compiler
+        symbolTable.declare(sym); 
     }
 
     private void analyzeMethod(MethodDecl node) {
-        // FIX: was node.type — should be node.returnType
         String returnTypeName = node.type != null ? node.type.baseName : "void";
         String previousReturn = symbolTable.getCurrentReturnType();
         symbolTable.setCurrentReturnType(returnTypeName);
@@ -174,7 +163,7 @@ public class SemanticAnalyzer {
         }
 
         if (node.body != null) {
-            analyzeBlockContents(node.body); // correct — params and body share this scope
+            analyzeBlockContents(node.body); 
         }
 
         symbolTable.exitScope();
@@ -182,7 +171,6 @@ public class SemanticAnalyzer {
     }
 
     private void analyzeConstructor(ConstructorDecl node) {
-        // Constructor name must match class name
         if (symbolTable.getCurrentClassName() != null &&
             !node.name.getLexeme().equals(symbolTable.getCurrentClassName())) {
             reportError("Constructor name '" + node.name.getLexeme() +
@@ -192,7 +180,7 @@ public class SemanticAnalyzer {
         }
 
         String previousReturn = symbolTable.getCurrentReturnType();
-        symbolTable.setCurrentReturnType("void"); // constructors have no return type
+        symbolTable.setCurrentReturnType("void");
 
         symbolTable.enterScope();
 
@@ -217,7 +205,6 @@ public class SemanticAnalyzer {
     }
 
     private void analyzeVarDecl(VarDecl node) {
-        // Validate non-primitive type is known
         if (node.type != null && !isPrimitiveType(node.type.baseName)
                 && !node.type.baseName.equals("String")
                 && !node.type.baseName.startsWith("java.")) {
@@ -228,13 +215,11 @@ public class SemanticAnalyzer {
             }
         }
 
-        // Analyze initializer BEFORE declaring to prevent self-reference
         String initType = null;
         if (node.init != null) {
             initType = analyzeExpr(node.init);
         }
 
-        // Type-check initializer
         if (node.type != null && initType != null && !initType.equals("error")) {
             if (!isTypeCompatible(node.type.baseName, initType)) {
                 reportError("Type mismatch: cannot assign '" + initType +
@@ -244,7 +229,6 @@ public class SemanticAnalyzer {
             }
         }
 
-        // Declare into current scope
         SymbolTable.Symbol sym = new SymbolTable.Symbol(
             node.name.getLexeme(), "variable",
             node.type != null ? node.type.baseName : "error",
@@ -272,8 +256,6 @@ public class SemanticAnalyzer {
         symbolTable.exitScope();
     }
 
-    // Analyze block contents WITHOUT opening a new scope
-    // Used by method/constructor which open the scope themselves to include params
     private void analyzeBlockContents(BlockStmt node) {
         for (ASTNode stmt : node.statements) {
             analyze(stmt);
@@ -309,14 +291,12 @@ public class SemanticAnalyzer {
     }
 
     private void analyzeFor(ForStmt node) {
-        symbolTable.enterScope(); // MUST be first
+        symbolTable.enterScope(); 
 
-        // init declares the loop variable into this scope
         if (node.init != null) {
-            analyze(node.init); // for VarDecl this calls analyzeVarDecl which declares 'i'
+            analyze(node.init); 
         }
 
-        // condition — 'i' is now visible
         if (node.condition != null) {
             String condType = analyzeExpr(node.condition);
             if (condType != null && !condType.equals("boolean") && !condType.equals("error")) {
@@ -325,10 +305,8 @@ public class SemanticAnalyzer {
             }
         }
 
-        // update — 'i' still visible
         if (node.update != null) analyzeExpr(node.update);
 
-        // body — analyzeBlock opens its own inner scope on top
         if (node.body != null) analyze(node.body);
 
         symbolTable.exitScope();
@@ -337,7 +315,6 @@ public class SemanticAnalyzer {
         String expected = symbolTable.getCurrentReturnType();
 
         if (node.value == null) {
-            // return; — valid only in void methods
             if (expected != null && !expected.equals("void")) {
                 reportError("Missing return value — method expects '" + expected + "'",
                             node.lineNumber, node.columnNumber);
@@ -347,7 +324,7 @@ public class SemanticAnalyzer {
 
         String actual = analyzeExpr(node.value);
 
-        if (expected == null) return; // outside any method — parser should have caught this
+        if (expected == null) return; 
 
         if (expected.equals("void")) {
             reportError("Cannot return a value from a void method",
@@ -363,11 +340,9 @@ public class SemanticAnalyzer {
     }
 
     private void analyzeThrow(ThrowStmt node) {
-        analyzeExpr(node.value); // just resolve — type checking for throws is advanced
+        analyzeExpr(node.value); 
     }
-    
-    // Returns the inferred type string, or "error" if unresolvable
-    // Returns null only if node is null
+
     private String analyzeExpr(ASTNode node) {
         if (node == null || node instanceof ErrorNode) return "error";
 
@@ -401,7 +376,7 @@ public class SemanticAnalyzer {
             case "String Literal":   return "String";
             case "Char Literal":     return "char";
             case "Boolean Literal":  return "boolean";
-            case "Special Literal":  return "null"; // null literal
+            case "Special Literal":  return "null"; 
             default:                 return "error";
         }
     }
@@ -436,13 +411,11 @@ public class SemanticAnalyzer {
 
         if (left.equals("error") || right.equals("error")) return "error";
 
-        // Comparison operators always produce boolean
         if (op.equals("==") || op.equals("!=") || op.equals("<") ||
             op.equals(">")  || op.equals("<=") || op.equals(">=")) {
             return "boolean";
         }
 
-        // Logical operators
         if (op.equals("&&") || op.equals("||")) {
             if (!left.equals("boolean") || !right.equals("boolean")) {
                 reportError("Logical operator '" + op + "' requires boolean operands, got '" +
@@ -452,12 +425,10 @@ public class SemanticAnalyzer {
             return "boolean";
         }
 
-        // String concatenation
         if (op.equals("+") && (left.equals("String") || right.equals("String"))) {
             return "String";
         }
 
-        // Numeric operators: +, -, *, /, %
         if (isNumericType(left) && isNumericType(right)) {
             return numericResultType(left, right);
         }
@@ -529,7 +500,7 @@ public class SemanticAnalyzer {
 
     private String analyzeCompoundAssign(CompoundAssignExp node) {
         String targetType = analyzeExpr(node.target);
-        String valueType  = analyzeExpr(node.value); // FIX: was missing entirely
+        String valueType  = analyzeExpr(node.value); 
 
         String op = node.operator.getLexeme();
 
@@ -552,18 +523,14 @@ public class SemanticAnalyzer {
     }
 
     private String analyzeMethodCall(MethodCallExp node) {
-        // Analyze the object the method is called on (if any)
         if (node.object != null) analyzeExpr(node.object);
 
-        // Resolve method name — for a mini compiler, just check it exists
         String methodName = node.method.getLexeme();
         SymbolTable.Symbol sym = symbolTable.resolve(methodName);
 
-        // Analyze all arguments regardless of whether method was found
         for (ASTNode arg : node.arguments) analyzeExpr(arg);
 
         if (sym == null) {
-            // Common built-in calls: System.out.println etc — skip for mini compiler
             if (!isKnownBuiltin(methodName)) {
                 reportError("Undeclared method '" + methodName + "'",
                             node.method.getLineNumber(), node.method.getColumnNumber());
@@ -571,13 +538,12 @@ public class SemanticAnalyzer {
             return "error";
         }
 
-        return sym.typeName; // return type of the method
+        return sym.typeName; 
     }
 
     private String analyzeFieldAccess(FieldAccessExp node) {
-        analyzeExpr(node.target); // still walk the object for errors
-        // Full field resolution requires a type table — return "error" for unknowns
-        return "error"; // semantic analyzer does not resolve field types in a mini compiler
+        analyzeExpr(node.target); 
+        return "error";
     }
 
     private String analyzeArrayAccess(ArrAccessExp node) {
@@ -589,12 +555,10 @@ public class SemanticAnalyzer {
                         node.lineNumber, node.columnNumber);
         }
 
-        // Strip one dimension from the type
         return arrayType.equals("error") ? "error" : arrayType;
     }
 
     private String analyzeNewObj(NewObjExp node) {
-        // Check type is known
         if (!isPrimitiveType(node.type.baseName) &&
             !node.type.baseName.equals("String") &&
             !node.type.baseName.startsWith("java.")) {
@@ -609,7 +573,6 @@ public class SemanticAnalyzer {
     }
 
     private String analyzeNewArr(NewArrExp node) {
-        // FIX: was node.elementType — check your NewArrExp, likely node.type
         if (node.size != null) {
             String sizeType = analyzeExpr(node.size);
             if (!sizeType.equals("int") && !sizeType.equals("error")) {
@@ -617,7 +580,7 @@ public class SemanticAnalyzer {
                             node.lineNumber, node.columnNumber);
             }
         }
-        return node.elementType.baseName; // element type — fix field name to match your AST node
+        return node.elementType.baseName; 
     }
 
     private String analyzeTernary(TernaryExp node) {
@@ -652,25 +615,23 @@ public class SemanticAnalyzer {
            type.equals("char");
 }
 
-    // Numeric promotion rules — widening only
     private String numericResultType(String a, String b) {
         if (a.equals("double") || b.equals("double")) return "double";
         if (a.equals("float")  || b.equals("float"))  return "float";
         if (a.equals("long")   || b.equals("long"))   return "long";
-        return "int"; // int, short, byte, char all promote to int
+        return "int"; 
     }
 
-    // Checks whether valueType can be assigned to targetType
+
     private boolean isTypeCompatible(String target, String value) {
         if (target.equals(value))       return true;
-        if (value.equals("null"))       return !isPrimitiveType(target); // null ok for objects
-        if (target.equals("double") && isNumericType(value)) return true; // widening
+        if (value.equals("null"))       return !isPrimitiveType(target); 
+        if (target.equals("double") && isNumericType(value)) return true; 
         if (target.equals("float")  && (value.equals("int") || value.equals("long"))) return true;
         if (target.equals("long")   && (value.equals("int") || value.equals("short") || value.equals("byte"))) return true;
         return false;
     }
 
-    // Known Java built-in method calls to suppress false "undeclared method" errors
     private boolean isKnownBuiltin(String name) {
         return name.equals("println") || name.equals("print")  ||
               name.equals("printf")  || name.equals("length") ||

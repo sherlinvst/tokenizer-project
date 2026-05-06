@@ -36,9 +36,9 @@ public class ASTToIRConverter {
             return "super";
         }
 
-        // ----------------------------------------------------------------
+        // ------------------------------
         // 2. Binary Expressions (a + b)
-        // ----------------------------------------------------------------
+        // ------------------------------
         if (node instanceof BinaryExp) {
             BinaryExp bin = (BinaryExp) node;
             String left  = convertNode(bin.left);

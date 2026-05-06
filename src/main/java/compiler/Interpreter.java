@@ -9,17 +9,12 @@ import main.java.compiler.parser.declaration.*;
 import main.java.compiler.parser.expression.*;
 import main.java.compiler.parser.statement.*;
 
-/**
- * Interpreter — AST Walker
- * Executes the logic defined in the AST nodes directly.
- */
+
 public class Interpreter {
 
-    // Stack of scopes for variables (maps name to current value)
     private final Stack<Map<String, Object>> scopes = new Stack<>();
 
     public Interpreter() {
-        // Global scope
         scopes.push(new HashMap<>());
     }
 

@@ -5,9 +5,9 @@ import java.util.ArrayList;
 public class SymbolTable {
     public static class Symbol {
         public final String name;
-        public final String kind;       // "variable", "method", "class", "parameter"
-        public final String typeName;   // "int", "String", "void", "MyClass", etc.
-        public final int arrayDims;     // 0 = not array, 1 = int[], 2 = int[][]
+        public final String kind;       
+        public final String typeName;   
+        public final int arrayDims;     
         public final int line, col;
 
         public Symbol(String name, String kind, String typeName, int arrayDims, int line, int col) {
@@ -25,22 +25,14 @@ public class SymbolTable {
         }
     }
 
-    // Stack of scopes — each scope is a flat list of symbols
-    // Using ArrayList<ArrayList<Symbol>>
     private final ArrayList<ArrayList<Symbol>> scopes = new ArrayList<>();
-
-    // Name of the class currently being analyzed — used for constructor checks
     private String currentClassName = null;
-
-    // Return type of the method currently being analyzed — used for return checks
     private String currentReturnType = null;
 
     public void setCurrentClassName(String name) { this.currentClassName  = name; }
     public void setCurrentReturnType(String type) { this.currentReturnType = type; }
     public String getCurrentClassName() { return currentClassName; }
     public String getCurrentReturnType() { return currentReturnType; }
-
-    // --- Scope management ---
 
     public void enterScope() {
         scopes.add(new ArrayList<>());
@@ -54,16 +46,10 @@ public class SymbolTable {
 
     public int scopeDepth() { return scopes.size(); }
 
-    // --- Declaration ---
-
-    // Returns null if declared successfully, or an error message if duplicate
     public String declare(Symbol symbol) {
         if (scopes.isEmpty()) return "No active scope";
 
         ArrayList<Symbol> current = scopes.get(scopes.size() - 1);
-
-        // Check for duplicate in the CURRENT scope only
-        // (shadowing an outer scope is allowed — same scope is not)
         for (Symbol s : current) {
             if (s.name.equals(symbol.name)) {
                 return "'" + symbol.name + "' is already declared in this scope "
@@ -72,12 +58,9 @@ public class SymbolTable {
         }
 
         current.add(symbol);
-        return null; // success
+        return null;
     }
 
-    // --- Resolution ---
-
-    // Search from innermost scope outward — returns null if not found
     public Symbol resolve(String name) {
         for (int i = scopes.size() - 1; i >= 0; i--) {
             for (Symbol s : scopes.get(i)) {
@@ -87,7 +70,6 @@ public class SymbolTable {
         return null;
     }
 
-    // Resolve only in the current (innermost) scope
     public Symbol resolveLocal(String name) {
         if (scopes.isEmpty()) return null;
         ArrayList<Symbol> current = scopes.get(scopes.size() - 1);
@@ -97,7 +79,6 @@ public class SymbolTable {
         return null;
     }
 
-    // Check if a class name is declared anywhere
     public Symbol resolveClass(String name) {
         for (int i = scopes.size() - 1; i >= 0; i--) {
             for (Symbol s : scopes.get(i)) {
